@@ -1,0 +1,163 @@
+//@version=6
+indicator("SP500 503 Intraday Research Exporter v1", shorttitle="SP503 Intraday Export", overlay=false, dynamic_requests=true)
+
+import TradingView/ta/12
+
+// -----------------------------------------------------------------------------
+// PURPOSE
+// Export 10 S&P 500 symbols per TradingView CSV with no manual ticker entry.
+// Primary research setting: 65-minute Regular Trading Hours chart.
+// Recommended volume-delta lower timeframe at 65m: 13 minutes.
+//
+// Why 65m:
+// - US regular session = 390 minutes.
+// - 390 / 65 = exactly 6 equal bars.
+// - Premium chart-history limit is 20,000 intraday bars.
+// - This gives roughly 13 years of RTH history.
+// - Premium lower-timeframe request limit is 100,000 intrabars.
+// - 65 / 13 = exactly 5 intrabars, so 20,000 chart bars * 5 = 100,000.
+//   That means the delta request can span essentially the same history as OHLCV.
+//
+// Exported fields per slot:
+//   Open, High, Low, Close, Volume, TradingView Volume Delta close.
+//
+// IMPORTANT:
+// - Put the chart on a liquid US equity/ETF time spine (SPY works well).
+// - Use REGULAR TRADING HOURS for the primary research pass.
+// - Set chart interval to 65 minutes for the recommended run.
+// - "Volume Delta" here is TradingView's lower-timeframe approximation, not
+//   exchange bid/ask classified order-flow delta.
+// - If memory limits occur, turn Export volume delta OFF; OHLCV will still export.
+// -----------------------------------------------------------------------------
+
+int batch = input.int(1, "Batch (1-51)", minval=1, maxval=51)
+bool exportDelta = input.bool(true, "Export TradingView volume delta")
+string deltaTf = input.timeframe("13", "Delta lower timeframe",
+     tooltip="Recommended: 13m when chart is 65m. For a 78m deep-history chart, use 26m for full-history delta or 13m for finer but shorter-history delta.")
+
+var array<string> universe = str.split("NVDA,AAPL,MSFT,AMZN,GOOGL,AVGO,GOOG,META,MU,LLY,TSLA,JPM,BRK.B,AMD,XOM,JNJ,V,WMT,ABBV,MA,INTC,CSCO,COST,BAC,PLTR,AMAT,CVX,LRCX,MRK,CAT,GE,UNH,KO,HD,NFLX,PG,GS,RTX,PM,PANW,GEV,WFC,MS,KLAC,ORCL,TXN,AMGN,SNDK,TMO,C,IBM,LIN,MRVL,VZ,CRWD,ABT,PEP,ANET,APH,MCD,STX,DIS,GILD,ADI,SCHW,AXP,UNP,NEE,BA,T,QCOM,CRM,BLK,WELL,BKNG,ETN,PFE,TJX,WDC,COP,UBER,DE,ISRG,VRTX,BMY,COF,PLD,NEM,DHR,NOW,SPGI,PH,PGR,DELL,LOW,CB,MDT,SBUX,LMT,CVS,GLW,SYK,HWM,ACN,ADP,MO,ADBE,BNY,BX,EQIX,MPC,SO,VLO,MCK,PWR,TT,INTU,VRT,GD,FCX,PNC,USB,PSX,CME,DUK,FTNT,CMCSA,MMM,CSX,MRSH,WMB,ICE,JCI,EMR,CEG,CDNS,ELV,TMUS,REGN,CMI,APP,DASH,WM,MDLZ,AMT,SHW,SLB,MSI,EOG,MAR,ABNB,NOC,NSC,BSX,DDOG,TRV,SNPS,UPS,GM,KKR,HLT,ROST,HOOD,ORLY,RCL,MCO,ITW,AON,CI,CL,SPG,ECL,TGT,FDX,WBD,HPE,HON,URI,CTAS,AEP,TDG,MNST,APD,PCAR,ALL,DLR,AJG,LITE,BKR,MPWR,TRGP,TFC,CRH,HCA,KMI,COR,APO,MRNA,OKE,D,FIX,TEL,TER,FAST,O,NXPI,F,GWW,NUE,CIEN,COHR,SRE,AME,DVN,CAH,KEYS,PSA,DAL,PYPL,HONA,AFL,EW,ADSK,CTVA,AXON,BDX,LHX,STT,MET,AZO,CVNA,AMP,FITB,WAB,XEL,ETR,NKE,GRMN,ROK,CARR,FERG,EQR,EXC,EBAY,CBRE,HUM,VST,VTR,CMG,IDXX,RSG,A,OXY,XYZ,NDAQ,PRU,KDP,MCHP,IQV,FLEX,TTWO,MSCI,ROP,WAT,FANG,WDAY,IBKR,YUM,AIG,DHI,ED,PAYX,SYY,ADM,PCG,NTAP,HIG,VEEV,UAL,PEG,ODFL,EXPE,KVUE,KMB,IRM,VMC,EME,MTB,COIN,WEC,HBAN,DXCM,NTRS,ACGL,CCL,JBL,GEHC,EQT,RMD,BIIB,CCI,MLM,ZTS,KR,WTW,STLD,EXR,CASY,RJF,CNC,AEE,ARES,TDY,ON,CPRT,CFG,CBOE,HAL,LYV,DTE,CTSH,IR,VICI,MTD,WSM,ATO,EIX,HSY,FISV,XYL,OTIS,HPQ,DOV,LH,AWK,ES,DG,FICO,SYF,DGX,PPL,TPR,CPAY,Q,CNP,RF,CINF,SW,NRG,DRI,PPG,HUBB,WST,OMC,PHM,FE,VLTO,VRSK,EXPD,EL,TROW,DLTR,FSLR,CHD,STE,EXE,ULTA,EFX,DOW,PKG,VRSN,KHC,PFG,AMCR,CMS,IP,TPL,FFIV,INCY,GIS,GPN,IFF,FIS,BRO,SMCI,WRB,SNA,KEY,BR,JBHT,LUV,NI,RDDT,ZBH,EVRG,SBAC,DD,VTRS,LEN,L,STZ,TSCO,GPC,ESS,LDOS,CF,LNT,FTV,WY,PTC,BBY,CDW,CHTR,J,IEX,NVR,LYB,CHRW,ZBRA,BALL,TSN,INVH,NDSN,AKAM,KIM,ALB,BG,SWK,APA,MAA,MAS,GEN,FDXF,TXT,COO,HST,RL,TYL,EG,MKC,DOC,IVZ,AVY,CRL,LVS,ALLE,BAX,TRMB,AIZ,CSGP,FOXA,RVTY,GL,LII,CLX,SJM,DECK,SOLV,IT,GDDY,TKO,REG,LULU,HAS,GNRC,HII,PNW,ECHO,JKHY,TECH,UDR,CPT,FDS,ALGN,NWSA,ROL,PNR,PODD,AES,BEN,APTV,DPZ,SWKS,BXP,FRT,UHS,HSIC,FOX,WYNN,MGM,NCLH,ARE,BLDR,AOS,HRL,MOS,TAP,ERIE,TTD,DVA,BF.B,NWS,PSKY", ",")
+
+f_index(int slot) =>
+    (batch - 1) * 10 + (slot - 1)
+
+f_valid(int slot) =>
+    f_index(slot) < array.size(universe)
+
+f_symbol(int slot) =>
+    int idx = f_index(slot)
+    string ticker = idx < array.size(universe) ? array.get(universe, idx) : "SPY"
+    "BATS:" + ticker
+
+f_delta_close() =>
+    [dvOpen, dvMax, dvMin, dvLast] = ta.requestVolumeDelta(deltaTf)
+    dvLast
+
+f_slot(string symbol) =>
+    [oo, hh, ll, cc, vv] = request.security(
+         symbol, timeframe.period, [open, high, low, close, volume],
+         gaps=barmerge.gaps_on, lookahead=barmerge.lookahead_off)
+    float dd = na
+    if exportDelta
+        dd := request.security(
+             symbol, timeframe.period, f_delta_close(),
+             gaps=barmerge.gaps_on, lookahead=barmerge.lookahead_off)
+    [oo, hh, ll, cc, vv, dd]
+
+string s1 = f_symbol(1)
+string s2 = f_symbol(2)
+string s3 = f_symbol(3)
+string s4 = f_symbol(4)
+string s5 = f_symbol(5)
+string s6 = f_symbol(6)
+string s7 = f_symbol(7)
+string s8 = f_symbol(8)
+string s9 = f_symbol(9)
+string s10 = f_symbol(10)
+
+[o1,h1,l1,c1,v1,d1] = f_slot(s1)
+[o2,h2,l2,c2,v2,d2] = f_slot(s2)
+[o3,h3,l3,c3,v3,d3] = f_slot(s3)
+[o4,h4,l4,c4,v4,d4] = f_slot(s4)
+[o5,h5,l5,c5,v5,d5] = f_slot(s5)
+[o6,h6,l6,c6,v6,d6] = f_slot(s6)
+[o7,h7,l7,c7,v7,d7] = f_slot(s7)
+[o8,h8,l8,c8,v8,d8] = f_slot(s8)
+[o9,h9,l9,c9,v9,d9] = f_slot(s9)
+[o10,h10,l10,c10,v10,d10] = f_slot(s10)
+
+plot(f_valid(1) ? o1 : na, "S01_O", display=display.data_window)
+plot(f_valid(1) ? h1 : na, "S01_H", display=display.data_window)
+plot(f_valid(1) ? l1 : na, "S01_L", display=display.data_window)
+plot(f_valid(1) ? c1 : na, "S01_C", display=display.data_window)
+plot(f_valid(1) ? v1 : na, "S01_V", display=display.data_window)
+plot(f_valid(1) ? d1 : na, "S01_D", display=display.data_window)
+plot(f_valid(2) ? o2 : na, "S02_O", display=display.data_window)
+plot(f_valid(2) ? h2 : na, "S02_H", display=display.data_window)
+plot(f_valid(2) ? l2 : na, "S02_L", display=display.data_window)
+plot(f_valid(2) ? c2 : na, "S02_C", display=display.data_window)
+plot(f_valid(2) ? v2 : na, "S02_V", display=display.data_window)
+plot(f_valid(2) ? d2 : na, "S02_D", display=display.data_window)
+plot(f_valid(3) ? o3 : na, "S03_O", display=display.data_window)
+plot(f_valid(3) ? h3 : na, "S03_H", display=display.data_window)
+plot(f_valid(3) ? l3 : na, "S03_L", display=display.data_window)
+plot(f_valid(3) ? c3 : na, "S03_C", display=display.data_window)
+plot(f_valid(3) ? v3 : na, "S03_V", display=display.data_window)
+plot(f_valid(3) ? d3 : na, "S03_D", display=display.data_window)
+plot(f_valid(4) ? o4 : na, "S04_O", display=display.data_window)
+plot(f_valid(4) ? h4 : na, "S04_H", display=display.data_window)
+plot(f_valid(4) ? l4 : na, "S04_L", display=display.data_window)
+plot(f_valid(4) ? c4 : na, "S04_C", display=display.data_window)
+plot(f_valid(4) ? v4 : na, "S04_V", display=display.data_window)
+plot(f_valid(4) ? d4 : na, "S04_D", display=display.data_window)
+plot(f_valid(5) ? o5 : na, "S05_O", display=display.data_window)
+plot(f_valid(5) ? h5 : na, "S05_H", display=display.data_window)
+plot(f_valid(5) ? l5 : na, "S05_L", display=display.data_window)
+plot(f_valid(5) ? c5 : na, "S05_C", display=display.data_window)
+plot(f_valid(5) ? v5 : na, "S05_V", display=display.data_window)
+plot(f_valid(5) ? d5 : na, "S05_D", display=display.data_window)
+plot(f_valid(6) ? o6 : na, "S06_O", display=display.data_window)
+plot(f_valid(6) ? h6 : na, "S06_H", display=display.data_window)
+plot(f_valid(6) ? l6 : na, "S06_L", display=display.data_window)
+plot(f_valid(6) ? c6 : na, "S06_C", display=display.data_window)
+plot(f_valid(6) ? v6 : na, "S06_V", display=display.data_window)
+plot(f_valid(6) ? d6 : na, "S06_D", display=display.data_window)
+plot(f_valid(7) ? o7 : na, "S07_O", display=display.data_window)
+plot(f_valid(7) ? h7 : na, "S07_H", display=display.data_window)
+plot(f_valid(7) ? l7 : na, "S07_L", display=display.data_window)
+plot(f_valid(7) ? c7 : na, "S07_C", display=display.data_window)
+plot(f_valid(7) ? v7 : na, "S07_V", display=display.data_window)
+plot(f_valid(7) ? d7 : na, "S07_D", display=display.data_window)
+plot(f_valid(8) ? o8 : na, "S08_O", display=display.data_window)
+plot(f_valid(8) ? h8 : na, "S08_H", display=display.data_window)
+plot(f_valid(8) ? l8 : na, "S08_L", display=display.data_window)
+plot(f_valid(8) ? c8 : na, "S08_C", display=display.data_window)
+plot(f_valid(8) ? v8 : na, "S08_V", display=display.data_window)
+plot(f_valid(8) ? d8 : na, "S08_D", display=display.data_window)
+plot(f_valid(9) ? o9 : na, "S09_O", display=display.data_window)
+plot(f_valid(9) ? h9 : na, "S09_H", display=display.data_window)
+plot(f_valid(9) ? l9 : na, "S09_L", display=display.data_window)
+plot(f_valid(9) ? c9 : na, "S09_C", display=display.data_window)
+plot(f_valid(9) ? v9 : na, "S09_V", display=display.data_window)
+plot(f_valid(9) ? d9 : na, "S09_D", display=display.data_window)
+plot(f_valid(10) ? o10 : na, "S10_O", display=display.data_window)
+plot(f_valid(10) ? h10 : na, "S10_H", display=display.data_window)
+plot(f_valid(10) ? l10 : na, "S10_L", display=display.data_window)
+plot(f_valid(10) ? c10 : na, "S10_C", display=display.data_window)
+plot(f_valid(10) ? v10 : na, "S10_V", display=display.data_window)
+plot(f_valid(10) ? d10 : na, "S10_D", display=display.data_window)
+
+plot(batch, "META_BATCH", display=display.data_window)
+plot(timeframe.in_seconds() / 60.0, "META_CHART_MINUTES", display=display.data_window)
+
+var table t = table.new(position.top_right, 2, 12, border_width=1)
+if barstate.islast
+    table.cell(t, 0, 0, "Slot")
+    table.cell(t, 1, 0, "Ticker")
+    for slot = 1 to 10
+        table.cell(t, 0, slot, "S" + str.tostring(slot, "00"))
+        int idx = f_index(slot)
+        string tk = idx < array.size(universe) ? array.get(universe, idx) : "-"
+        table.cell(t, 1, slot, tk)
+    string tfWarn = timeframe.period == "65" ? "65m primary" : "Custom TF: " + timeframe.period
+    table.cell(t, 0, 11, "Mode")
+    table.cell(t, 1, 11, tfWarn + (exportDelta ? " + delta " + deltaTf + "m" : " OHLCV only"))
