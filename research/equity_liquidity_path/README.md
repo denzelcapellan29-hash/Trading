@@ -2,43 +2,44 @@
 
 Independent equity market-structure research branch. Frozen equity sleeves (Momentum Barbell, Agreement Reversion, PCA StatArb 8/9/10, and their preferred blends) are benchmarks only and are not used to select or condition events.
 
-Current structural checkpoint: `Equity_Liquidity_Path_Q_Decomposition_v5_2026-08-23`.
+## Current state
 
-Research order:
-1. build causal liquidity/node map;
-2. validate geometry/path behavior;
-3. validate hold vs acceptance resolution;
-4. identify coherent event families;
-5. only then construct standalone strategies;
-6. finally compare with frozen equity portfolios.
+The broad daily event research established a real node/path effect, but the exact-price daily implementation did **not** survive as a standalone strategy. The main implementation failure is timing: high daily QR improves target-before-invalidation path ordering, but by the daily close much of the favorable reward/risk has already been consumed.
 
-## Current structural hierarchy
+The rejected daily implementation nevertheless has a useful covariance fingerprint versus the frozen preferred 50% Barbell / 25% Agreement / 25% PCA portfolio:
 
-- **Geometry/distance** selects the actionable node neighborhood.
-- **Q-like confluence** describes whether a nearby node tends to resolve cleanly/informatively.
-- **Lifecycle / repeated touches** is a separate hold-vs-gateway prior.
-- **QR / resolution displacement** grades conditional path quality after the touch resolves.
+- Corridor rejection correlation: about +0.075
+- Gateway acceptance correlation: about -0.029
+- 50/50 liquidity-family shadow: about +0.039
 
-The working non-optimized Q research label is:
+So the next research objective is not to retune the daily strategy. It is to test whether intraday resolution can repair expectancy **while preserving near-zero covariance**.
 
-```text
-q_score = 1[node_source_diversity >= 2] + 1[node_members >= 3]
-```
+## Intraday phase
 
-Broad Q2-vs-Q0 clean-resolution lift is about +1.8 to +2.4 percentage points across TRAIN/VALIDATION/HOLDOUT. In the TRAIN-fixed nearest-distance quartile the lift is about +8.3 to +8.8pp, with path-hit lift +2.5pp TRAIN, +3.5pp validation and +5.25pp holdout. Importantly, high-Q nodes are **less likely to hold**, so Q is not being interpreted as generic support/resistance strength.
+The canonical exporter is under:
 
-Within Q2, fresh 0-1-touch nodes are roughly 20pp more likely to hold than 5+ touch nodes across all periods, confirming depletion/gateway behavior as a separate lifecycle layer.
+`research/equity_liquidity_path/intraday_exporter_v1/`
 
-Q2 + high QR produces roughly 60-64% hold-path hit rates and roughly 65-67% corrected acceptance-path hit rates across chronology.
+Default Premium-optimized profile:
 
-The corrected anonymous source-bit ablation now includes unresolved/chop. Bits 7/8 are gateway-like but path-informative; bit 3 is hold-oriented but mildly path-negative. No economic labels are assigned until the original source-mask dictionary is recovered.
+- 1D chart as container
+- 20-minute RTH OHLCV via `request.security_lower_tf()`
+- 20-minute TradingView footprint buy/sell/delta
+- 30-minute extended-hours daily context
+- BATS symbols for parity with the canonical daily 503-stock savepoint
+- same 150-name rank-stratified pilot used for the exact daily implementation
 
-## Standalone family status
+Twenty-minute RTH was selected because Premium Pine lower-timeframe requests can retrieve up to 100,000 intrabars. At about 20 bars per full RTH session, that is roughly 5,000 sessions / 19.8 trading years, enough for the 2010-2026 research window.
 
-- Equity Corridor Traversal: **advance after exact node prices are restored**.
-- Fixed one-week Decision-Node Rotation: **rejected**.
-- Daily Compression + simple Flow + Path: **rejected/deferred to intraday data**.
+If 20-minute resolution improves causal expectancy but target/stop sequencing remains ambiguous, the exporter generator can create 15m, 10m, or 5m profiles. The intended escalation is finer **event-window** data rather than an immediate full-503 maximum-resolution download.
 
-Exact Node1/Node2/Node3 prices, source-family labels, full corrected acceptance targets, and sector robustness remain required before standalone PnL promotion.
+## Promotion gate
 
-Large derived event chunks and v5 output tables are stored in the project Google Drive `data/` folder. The reproducible v5 script is `run_equity_liquidity_q_decomposition_v5.py`.
+No liquidity sleeve is added to the frozen portfolio unless an intraday implementation demonstrates:
+
+1. positive causal expectancy after costs;
+2. stable TRAIN / validation / holdout behavior;
+3. breadth across names and sectors;
+4. acceptable path/MAE/target-stop sequencing;
+5. correlation roughly within ±0.10 of the preferred frozen equity portfolio;
+6. no dependence on a few crisis episodes or names.
