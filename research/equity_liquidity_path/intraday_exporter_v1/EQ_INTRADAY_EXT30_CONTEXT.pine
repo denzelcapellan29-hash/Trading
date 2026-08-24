@@ -1,0 +1,64 @@
+//@version=6
+indicator("EQ_INTRADAY_EXT30_CONTEXT", overlay = false)
+
+string reqTicker = ticker.new(syminfo.prefix, syminfo.ticker, session.extended, adjustment.splits)
+[tA, oA, hA, lA, cA, vA] = request.security_lower_tf(reqTicker, "30", [time, open, high, low, close, volume], calc_bars_count = 100000)
+
+float preO = na
+float preH = na
+float preL = na
+float preC = na
+float preV = 0.0
+int preN = 0
+float postO = na
+float postH = na
+float postL = na
+float postC = na
+float postV = 0.0
+int postN = 0
+
+int n = array.size(tA)
+if n > 0
+    for i = 0 to n - 1
+        int ti = array.get(tA, i)
+        float oi = array.get(oA, i)
+        float hi = array.get(hA, i)
+        float li = array.get(lA, i)
+        float ci = array.get(cA, i)
+        float vi = array.get(vA, i)
+        int hh = hour(ti, "America/New_York")
+        int mm = minute(ti, "America/New_York")
+        int mins = hh * 60 + mm
+
+        bool isPre = mins < 570
+        bool isPost = mins >= 960
+
+        if isPre
+            preO := na(preO) ? oi : preO
+            preH := na(preH) ? hi : math.max(preH, hi)
+            preL := na(preL) ? li : math.min(preL, li)
+            preC := ci
+            preV += nz(vi)
+            preN += 1
+
+        if isPost
+            postO := na(postO) ? oi : postO
+            postH := na(postH) ? hi : math.max(postH, hi)
+            postL := na(postL) ? li : math.min(postL, li)
+            postC := ci
+            postV += nz(vi)
+            postN += 1
+
+plot(n, "EXT30_count", display = display.data_window)
+plot(preN, "PRE30_count", display = display.data_window)
+plot(preO, "PRE30_open", display = display.data_window)
+plot(preH, "PRE30_high", display = display.data_window)
+plot(preL, "PRE30_low", display = display.data_window)
+plot(preC, "PRE30_close", display = display.data_window)
+plot(preV, "PRE30_volume", display = display.data_window)
+plot(postN, "POST30_count", display = display.data_window)
+plot(postO, "POST30_open", display = display.data_window)
+plot(postH, "POST30_high", display = display.data_window)
+plot(postL, "POST30_low", display = display.data_window)
+plot(postC, "POST30_close", display = display.data_window)
+plot(postV, "POST30_volume", display = display.data_window)
