@@ -1,0 +1,152 @@
+//@version=6
+indicator("SP500 503 Intraday Batch Exporter", shorttitle="SP503 Batch Export", overlay=false, dynamic_requests=true)
+
+// -----------------------------------------------------------------------------
+// PURPOSE
+// Export OHLCV for 10 S&P 500 stocks at once from a single TradingView chart.
+//
+// Recommended full-history setting:
+//   - Chart: BATS:SPY (time spine only)
+//   - Session: Regular Trading Hours
+//   - Timeframe: 78 minutes
+//   - Batch: 1..51
+//
+// Why 78m:
+//   390 RTH minutes / 78 = exactly 5 bars per normal session.
+//   A 20,000-bar Premium intraday chart therefore covers about 4,000 sessions,
+//   which is approximately enough to reach the 2010 research start.
+//   It is also materially finer than the 2-hour FX research interval.
+//
+// If you only need approximately 2013+ history, the same exporter can be run
+// on a 65-minute RTH chart (6 equal bars/session).
+//
+// IMPORTANT:
+//   - This is OHLCV only. No footprint/delta fields are included.
+//   - One export contains TEN stocks.
+//   - Change ONLY the Batch input between exports.
+//   - 503 stocks => 51 batch CSVs total.
+// -----------------------------------------------------------------------------
+
+int batch = input.int(1, "Batch (1-51)", minval=1, maxval=51,
+     tooltip="Ten stocks per batch. Export B01, then change to B02, etc.")
+int expectedMinutes = input.int(78, "Expected chart minutes", options=[65, 78],
+     tooltip="78m recommended for ~2010-present chronology. 65m is a finer but shorter-history alternative.")
+
+var array<string> universe = str.split("NVDA,AAPL,MSFT,AMZN,GOOGL,AVGO,GOOG,META,MU,LLY,TSLA,JPM,BRK.B,AMD,XOM,JNJ,V,WMT,ABBV,MA,INTC,CSCO,COST,BAC,PLTR,AMAT,CVX,LRCX,MRK,CAT,GE,UNH,KO,HD,NFLX,PG,GS,RTX,PM,PANW,GEV,WFC,MS,KLAC,ORCL,TXN,AMGN,SNDK,TMO,C,IBM,LIN,MRVL,VZ,CRWD,ABT,PEP,ANET,APH,MCD,STX,DIS,GILD,ADI,SCHW,AXP,UNP,NEE,BA,T,QCOM,CRM,BLK,WELL,BKNG,ETN,PFE,TJX,WDC,COP,UBER,DE,ISRG,VRTX,BMY,COF,PLD,NEM,DHR,NOW,SPGI,PH,PGR,DELL,LOW,CB,MDT,SBUX,LMT,CVS,GLW,SYK,HWM,ACN,ADP,MO,ADBE,BNY,BX,EQIX,MPC,SO,VLO,MCK,PWR,TT,INTU,VRT,GD,FCX,PNC,USB,PSX,CME,DUK,FTNT,CMCSA,MMM,CSX,MRSH,WMB,ICE,JCI,EMR,CEG,CDNS,ELV,TMUS,REGN,CMI,APP,DASH,WM,MDLZ,AMT,SHW,SLB,MSI,EOG,MAR,ABNB,NOC,NSC,BSX,DDOG,TRV,SNPS,UPS,GM,KKR,HLT,ROST,HOOD,ORLY,RCL,MCO,ITW,AON,CI,CL,SPG,ECL,TGT,FDX,WBD,HPE,HON,URI,CTAS,AEP,TDG,MNST,APD,PCAR,ALL,DLR,AJG,LITE,BKR,MPWR,TRGP,TFC,CRH,HCA,KMI,COR,APO,MRNA,OKE,D,FIX,TEL,TER,FAST,O,NXPI,F,GWW,NUE,CIEN,COHR,SRE,AME,DVN,CAH,KEYS,PSA,DAL,PYPL,HONA,AFL,EW,ADSK,CTVA,AXON,BDX,LHX,STT,MET,AZO,CVNA,AMP,FITB,WAB,XEL,ETR,NKE,GRMN,ROK,CARR,FERG,EQR,EXC,EBAY,CBRE,HUM,VST,VTR,CMG,IDXX,RSG,A,OXY,XYZ,NDAQ,PRU,KDP,MCHP,IQV,FLEX,TTWO,MSCI,ROP,WAT,FANG,WDAY,IBKR,YUM,AIG,DHI,ED,PAYX,SYY,ADM,PCG,NTAP,HIG,VEEV,UAL,PEG,ODFL,EXPE,KVUE,KMB,IRM,VMC,EME,MTB,COIN,WEC,HBAN,DXCM,NTRS,ACGL,CCL,JBL,GEHC,EQT,RMD,BIIB,CCI,MLM,ZTS,KR,WTW,STLD,EXR,CASY,RJF,CNC,AEE,ARES,TDY,ON,CPRT,CFG,CBOE,HAL,LYV,DTE,CTSH,IR,VICI,MTD,WSM,ATO,EIX,HSY,FISV,XYL,OTIS,HPQ,DOV,LH,AWK,ES,DG,FICO,SYF,DGX,PPL,TPR,CPAY,Q,CNP,RF,CINF,SW,NRG,DRI,PPG,HUBB,WST,OMC,PHM,FE,VLTO,VRSK,EXPD,EL,TROW,DLTR,FSLR,CHD,STE,EXE,ULTA,EFX,DOW,PKG,VRSN,KHC,PFG,AMCR,CMS,IP,TPL,FFIV,INCY,GIS,GPN,IFF,FIS,BRO,SMCI,WRB,SNA,KEY,BR,JBHT,LUV,NI,RDDT,ZBH,EVRG,SBAC,DD,VTRS,LEN,L,STZ,TSCO,GPC,ESS,LDOS,CF,LNT,FTV,WY,PTC,BBY,CDW,CHTR,J,IEX,NVR,LYB,CHRW,ZBRA,BALL,TSN,INVH,NDSN,AKAM,KIM,ALB,BG,SWK,APA,MAA,MAS,GEN,FDXF,TXT,COO,HST,RL,TYL,EG,MKC,DOC,IVZ,AVY,CRL,LVS,ALLE,BAX,TRMB,AIZ,CSGP,FOXA,RVTY,GL,LII,CLX,SJM,DECK,SOLV,IT,GDDY,TKO,REG,LULU,HAS,GNRC,HII,PNW,ECHO,JKHY,TECH,UDR,CPT,FDS,ALGN,NWSA,ROL,PNR,PODD,AES,BEN,APTV,DPZ,SWKS,BXP,FRT,UHS,HSIC,FOX,WYNN,MGM,NCLH,ARE,BLDR,AOS,HRL,MOS,TAP,ERIE,TTD,DVA,BF.B,NWS,PSKY", ",")
+
+f_index(int slot) =>
+    (batch - 1) * 10 + (slot - 1)
+
+f_valid(int slot) =>
+    f_index(slot) < array.size(universe)
+
+f_ticker(int slot) =>
+    int idx = f_index(slot)
+    idx < array.size(universe) ? array.get(universe, idx) : ""
+
+f_symbol(int slot) =>
+    string tk = f_ticker(slot)
+    tk == "" ? "BATS:SPY" : "BATS:" + tk
+
+f_slot(string symbol) =>
+    [oo, hh, ll, cc, vv] = request.security(
+         symbol,
+         timeframe.period,
+         [open, high, low, close, volume],
+         gaps=barmerge.gaps_on,
+         lookahead=barmerge.lookahead_off,
+         ignore_invalid_symbol=true)
+    [oo, hh, ll, cc, vv]
+
+// Ten symbols = 10 unique security requests.
+// 5 exported fields per symbol = 50 plots, leaving room under Pine's plot cap.
+string s1  = f_symbol(1)
+string s2  = f_symbol(2)
+string s3  = f_symbol(3)
+string s4  = f_symbol(4)
+string s5  = f_symbol(5)
+string s6  = f_symbol(6)
+string s7  = f_symbol(7)
+string s8  = f_symbol(8)
+string s9  = f_symbol(9)
+string s10 = f_symbol(10)
+
+[o1,h1,l1,c1,v1]       = f_slot(s1)
+[o2,h2,l2,c2,v2]       = f_slot(s2)
+[o3,h3,l3,c3,v3]       = f_slot(s3)
+[o4,h4,l4,c4,v4]       = f_slot(s4)
+[o5,h5,l5,c5,v5]       = f_slot(s5)
+[o6,h6,l6,c6,v6]       = f_slot(s6)
+[o7,h7,l7,c7,v7]       = f_slot(s7)
+[o8,h8,l8,c8,v8]       = f_slot(s8)
+[o9,h9,l9,c9,v9]       = f_slot(s9)
+[o10,h10,l10,c10,v10] = f_slot(s10)
+
+plot(f_valid(1) ? o1 : na, "S01_O", display=display.data_window)
+plot(f_valid(1) ? h1 : na, "S01_H", display=display.data_window)
+plot(f_valid(1) ? l1 : na, "S01_L", display=display.data_window)
+plot(f_valid(1) ? c1 : na, "S01_C", display=display.data_window)
+plot(f_valid(1) ? v1 : na, "S01_V", display=display.data_window)
+plot(f_valid(2) ? o2 : na, "S02_O", display=display.data_window)
+plot(f_valid(2) ? h2 : na, "S02_H", display=display.data_window)
+plot(f_valid(2) ? l2 : na, "S02_L", display=display.data_window)
+plot(f_valid(2) ? c2 : na, "S02_C", display=display.data_window)
+plot(f_valid(2) ? v2 : na, "S02_V", display=display.data_window)
+plot(f_valid(3) ? o3 : na, "S03_O", display=display.data_window)
+plot(f_valid(3) ? h3 : na, "S03_H", display=display.data_window)
+plot(f_valid(3) ? l3 : na, "S03_L", display=display.data_window)
+plot(f_valid(3) ? c3 : na, "S03_C", display=display.data_window)
+plot(f_valid(3) ? v3 : na, "S03_V", display=display.data_window)
+plot(f_valid(4) ? o4 : na, "S04_O", display=display.data_window)
+plot(f_valid(4) ? h4 : na, "S04_H", display=display.data_window)
+plot(f_valid(4) ? l4 : na, "S04_L", display=display.data_window)
+plot(f_valid(4) ? c4 : na, "S04_C", display=display.data_window)
+plot(f_valid(4) ? v4 : na, "S04_V", display=display.data_window)
+plot(f_valid(5) ? o5 : na, "S05_O", display=display.data_window)
+plot(f_valid(5) ? h5 : na, "S05_H", display=display.data_window)
+plot(f_valid(5) ? l5 : na, "S05_L", display=display.data_window)
+plot(f_valid(5) ? c5 : na, "S05_C", display=display.data_window)
+plot(f_valid(5) ? v5 : na, "S05_V", display=display.data_window)
+plot(f_valid(6) ? o6 : na, "S06_O", display=display.data_window)
+plot(f_valid(6) ? h6 : na, "S06_H", display=display.data_window)
+plot(f_valid(6) ? l6 : na, "S06_L", display=display.data_window)
+plot(f_valid(6) ? c6 : na, "S06_C", display=display.data_window)
+plot(f_valid(6) ? v6 : na, "S06_V", display=display.data_window)
+plot(f_valid(7) ? o7 : na, "S07_O", display=display.data_window)
+plot(f_valid(7) ? h7 : na, "S07_H", display=display.data_window)
+plot(f_valid(7) ? l7 : na, "S07_L", display=display.data_window)
+plot(f_valid(7) ? c7 : na, "S07_C", display=display.data_window)
+plot(f_valid(7) ? v7 : na, "S07_V", display=display.data_window)
+plot(f_valid(8) ? o8 : na, "S08_O", display=display.data_window)
+plot(f_valid(8) ? h8 : na, "S08_H", display=display.data_window)
+plot(f_valid(8) ? l8 : na, "S08_L", display=display.data_window)
+plot(f_valid(8) ? c8 : na, "S08_C", display=display.data_window)
+plot(f_valid(8) ? v8 : na, "S08_V", display=display.data_window)
+plot(f_valid(9) ? o9 : na, "S09_O", display=display.data_window)
+plot(f_valid(9) ? h9 : na, "S09_H", display=display.data_window)
+plot(f_valid(9) ? l9 : na, "S09_L", display=display.data_window)
+plot(f_valid(9) ? c9 : na, "S09_C", display=display.data_window)
+plot(f_valid(9) ? v9 : na, "S09_V", display=display.data_window)
+plot(f_valid(10) ? o10 : na, "S10_O", display=display.data_window)
+plot(f_valid(10) ? h10 : na, "S10_H", display=display.data_window)
+plot(f_valid(10) ? l10 : na, "S10_L", display=display.data_window)
+plot(f_valid(10) ? c10 : na, "S10_C", display=display.data_window)
+plot(f_valid(10) ? v10 : na, "S10_V", display=display.data_window)
+
+plot(batch, "META_BATCH", display=display.data_window)
+plot(timeframe.in_seconds() / 60.0, "META_CHART_MINUTES", display=display.data_window)
+
+var table t = table.new(position.top_right, 2, 13, border_width=1)
+if barstate.islast
+    table.cell(t, 0, 0, "Slot")
+    table.cell(t, 1, 0, "Ticker")
+    for slot = 1 to 10
+        table.cell(t, 0, slot, "S" + str.tostring(slot, "00"))
+        table.cell(t, 1, slot, f_valid(slot) ? f_ticker(slot) : "-")
+    float actualMin = timeframe.in_seconds() / 60.0
+    bool tfOK = math.abs(actualMin - expectedMinutes) < 0.01
+    table.cell(t, 0, 11, "Batch")
+    table.cell(t, 1, 11, str.tostring(batch) + " / 51")
+    table.cell(t, 0, 12, "TF")
+    table.cell(t, 1, 12, tfOK ? str.tostring(expectedMinutes) + "m OK" :
+        "WARNING: chart=" + str.tostring(actualMin) + "m")
