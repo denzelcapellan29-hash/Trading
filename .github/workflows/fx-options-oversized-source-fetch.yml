@@ -1,0 +1,57 @@
+name: FX Options Oversized Source Fetch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fx-options-oversized-source-fetch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - currency: CAD
+            year: '2021'
+            filename: glbx-mdp3-20210101-20211231.statistics.dbn.zst
+            url: https://api.databento.com/v0/batch/download/T5674YXP/GLBX-20260820-WGHEQMSGAN/glbx-mdp3-20210101-20211231.statistics.dbn.zst
+            sha256: 366ce6e46b63129d297d7109a5c09fb89dc9fa4617a807ca3155534ca3402563
+          - currency: CAD
+            year: '2022'
+            filename: glbx-mdp3-20220101-20221231.statistics.dbn.zst
+            url: https://api.databento.com/v0/batch/download/T5674YXP/GLBX-20260820-WGHEQMSGAN/glbx-mdp3-20220101-20221231.statistics.dbn.zst
+            sha256: fdd3c0fc3137162449a39971bc6d8f8cffc21a64829aa7323aa9a4ab54a5cbb5
+    steps:
+      - name: Download and verify source DBN
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors --output "${{ matrix.filename }}" "${{ matrix.url }}"
+          echo "${{ matrix.sha256 }}  ${{ matrix.filename }}" | sha256sum --check --strict
+          split -b 70M -d -a 2 "${{ matrix.filename }}" "${{ matrix.currency }}_${{ matrix.year }}_${{ matrix.filename }}.part"
+          ls -lh "${{ matrix.currency }}_${{ matrix.year }}_${{ matrix.filename }}.part"*
+      - name: Upload part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.currency }}-${{ matrix.year }}-part00
+          path: ${{ matrix.currency }}_${{ matrix.year }}_${{ matrix.filename }}.part00
+          compression-level: 0
+      - name: Upload part 01
+        if: ${{ hashFiles(format('{0}_{1}_{2}.part01', matrix.currency, matrix.year, matrix.filename)) != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.currency }}-${{ matrix.year }}-part01
+          path: ${{ matrix.currency }}_${{ matrix.year }}_${{ matrix.filename }}.part01
+          compression-level: 0
+      - name: Upload part 02
+        if: ${{ hashFiles(format('{0}_{1}_{2}.part02', matrix.currency, matrix.year, matrix.filename)) != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.currency }}-${{ matrix.year }}-part02
+          path: ${{ matrix.currency }}_${{ matrix.year }}_${{ matrix.filename }}.part02
+          compression-level: 0
