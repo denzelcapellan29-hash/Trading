@@ -6,9 +6,9 @@ Expected workflow:
     EQ_INTRADAY_78M_B01.csv
     EQ_INTRADAY_78M_B02.csv
     ...
-    EQ_INTRADAY_78M_B51.csv
+    EQ_INTRADAY_78M_B42.csv
 
-The script maps S01..S10 to tickers using the frozen manifest and writes one
+The script maps S01..S12 to tickers using the frozen manifest and writes one
 gzip-compressed OHLCV file per ticker plus audit tables.
 
 Usage:
@@ -37,14 +37,16 @@ def find_col(columns, target):
     return None
 
 def get_batch(df, path):
-    c=find_col(df.columns,"META_BATCH")
-    if c is not None:
-        x=pd.to_numeric(df[c],errors="coerce").dropna()
-        if not x.empty:
-            return int(round(float(x.iloc[-1])))
+    # Canonical filenames: EQ_INTRADAY_78M_B01.csv ... B42.csv.
+    # Batch metadata is intentionally not plotted because plot capacity is used
+    # for the maximum 12-stock OHLCV payload.
     m=re.search(r"(?:^|[_-])B(?:ATCH)?0*(\d+)(?:[_\-.]|$)",path.name,re.I)
-    if m: return int(m.group(1))
-    raise ValueError(f"Cannot determine batch from {path.name}")
+    if m:
+        return int(m.group(1))
+    raise ValueError(
+        f"Cannot determine batch from {path.name}. "
+        "Name exports like EQ_INTRADAY_78M_B01.csv."
+    )
 
 def get_time_col(df):
     candidates=["time","datetime","date","timestamp"]
@@ -78,11 +80,9 @@ def main():
             if batch_map.empty:
                 raise ValueError(f"Batch {batch} absent from manifest")
 
-            chart_min_col=find_col(df.columns,"META_CHART_MINUTES")
-            chart_min=np.nan
-            if chart_min_col:
-                vals=pd.to_numeric(df[chart_min_col],errors="coerce").dropna()
-                if not vals.empty: chart_min=float(vals.iloc[-1])
+            # Parse chart minutes from canonical filename, e.g. 78M.
+            mtf=re.search(r"(?:^|[_-])(\d+)M(?:[_-]|\.)",f.name,re.I)
+            chart_min=float(mtf.group(1)) if mtf else np.nan
 
             for _,r in batch_map.iterrows():
                 slot=int(r.slot)
