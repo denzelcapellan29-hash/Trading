@@ -1,0 +1,67 @@
+{
+  "strategy_id": "FX_VALIDATED_65FAST_35ALT",
+  "status": "productionization_candidate_not_live_authorized",
+  "portfolio": {
+    "fast_share": 0.65,
+    "alt_share": 0.35,
+    "combined_account_fx_weight_research_target": 0.50
+  },
+  "alt_router": {
+    "sleeve_budgets": {"corridor": 0.50, "rotation": 0.30, "compression": 0.20},
+    "unused_sleeve_budget": "cash",
+    "exact_duplicate_rule": "corridor_over_rotation_same_event_key",
+    "one_alt_position_per_pair": true,
+    "same_pair_overlap_rule": "earlier_live_position_wins_tie_priority_corridor_compression_rotation",
+    "max_net_single_currency_pre_vol_scale": 0.60,
+    "soft_concurrency_cap": 6,
+    "cap_action": "proportional_whole_alt_book_scale",
+    "research_cost_pips_round_trip": 5.0,
+    "router_vol_target_annual": 0.10,
+    "router_vol_lookback_weeks": 52,
+    "router_vol_min_history_weeks": 26,
+    "router_vol_scale_clip": [0.5, 3.0],
+    "fast_relative_riskmatch_lookback_weeks": 52,
+    "fast_relative_riskmatch_min_history_weeks": 26,
+    "fast_relative_riskmatch_scale_clip": [0.5, 2.5]
+  },
+  "frozen_sleeves": {
+    "corridor": {
+      "state": "corridor",
+      "resolution": "held/rejected",
+      "event_driven_qr_min": 0.70,
+      "entry": "next_2h_open",
+      "exit": "nearest_opposite_side_mapped_node",
+      "failsafe": "48_trading_hours",
+      "relative_weighting": "equal_weight_within_active_sleeve"
+    },
+    "rotation": {
+      "role": "decision_node",
+      "resolution": "held/rejected",
+      "event_driven_qr_min": 0.70,
+      "entry": "next_2h_open_away_from_rejected_node",
+      "exit": "one_fx_trading_week",
+      "relative_weighting": "equal_weight_within_active_sleeve"
+    },
+    "compression": {
+      "state": "actual_factor_compression",
+      "path": "clean_liquidity_path",
+      "flow": "strict_3_of_3_local_fxofi_alignment",
+      "breakout_requirement": false,
+      "target": "node2_else_node1",
+      "invalidation": "opposite_side_node",
+      "failsafe": "96_2h_bars",
+      "relative_weighting": "inverse_annvol65_within_active_sleeve"
+    }
+  },
+  "historical_parity_requirement": {
+    "absolute_tolerance": 1e-12,
+    "required_layers": [
+      "selected_trades_to_router_raw",
+      "router_raw_to_router_10vol",
+      "router_10vol_to_alt_riskmatch",
+      "fast_plus_alt_to_65fast35alt"
+    ]
+  },
+  "upstream_signal_generation_status": "partial_source_recovery_required",
+  "live_authority": false
+}
