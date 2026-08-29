@@ -15,7 +15,7 @@ from trading_prod.equity.store import EquityDataStore
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--universe", default=str(ROOT / "config/equity_universe_503_ibkr.csv"))
+    ap.add_argument("--universe", required=True, help="CSV manifest for the frozen equity universe")
     ap.add_argument("--db", default="./state/equity_marketdata.sqlite3")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=4002, help="IB Gateway paper default")
