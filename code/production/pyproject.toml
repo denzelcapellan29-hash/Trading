@@ -11,6 +11,7 @@ dependencies = []
 
 [project.optional-dependencies]
 replay = ["pandas>=2.0", "numpy>=1.26"]
+equity = ["pandas>=2.0", "numpy>=1.26"]
 
 [project.scripts]
 trading-prod = "trading_prod.cli:main"
