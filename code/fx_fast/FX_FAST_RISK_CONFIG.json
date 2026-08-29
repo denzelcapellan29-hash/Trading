@@ -1,0 +1,36 @@
+{
+  "strategy_id": "FAST_31PAIR_PRODUCTION",
+  "strategy_version": "Pine v6.1.5u1 baseline; AUDCAD v6.1.6 coal-aligned; July-30-2026 bounded inverse-vol allocator",
+  "status": "FROZEN_PRODUCTION",
+  "order_of_operations": [
+    "prior completed weekly model state",
+    "branch/direction eligibility",
+    "categorical multiplier",
+    "base planned stop risk",
+    "13-week bounded inverse-vol cohort reallocation",
+    "8% weekly planned-risk cap",
+    "notional from all-in stop loss fraction",
+    "Monday entry",
+    "stop or Friday exit"
+  ],
+  "controls": [
+    {"name":"pair_universe","status":"FROZEN","action":"eligibility","effect":"31 production pairs only; AUDJPY excluded"},
+    {"name":"primary_stable_branch","status":"FROZEN","input":"63-day EG/ADF stability + 52-week level residual z","threshold":{"min_abs_z":1.5,"standard_abs_z":1.625},"action":"eligibility/direction"},
+    {"name":"secondary_unstable_branch","status":"FROZEN","input":"EG unstable + primary z + 52-week first-difference residual z","threshold":{"primary_abs_z":1.625,"secondary_abs_z":2.0},"action":"eligibility/direction"},
+    {"name":"categorical_multiplier","status":"FROZEN","threshold":{"allowed":[0.5,0.75,1.0,1.25]},"action":"size","effect":"base planned risk = 1.6% * multiplier; exact Pine precedence controls"},
+    {"name":"stop","status":"FROZEN","threshold":0.0225,"action":"execution/exit"},
+    {"name":"bounded_inverse_volatility","status":"FROZEN","input":"13-week annualized spot vol","calculation":"cohort median vol / trade vol; clip 0.50-1.50; bounded normalization preserves cohort planned risk","action":"size"},
+    {"name":"weekly_planned_risk_cap","status":"FROZEN","threshold":0.08,"calculation":"proportional cohort scale; no signal ranking/rejection","action":"size"},
+    {"name":"entry_clock","status":"FROZEN","calculation":"Monday 09:00 Europe/London only; no holiday fallback","action":"execution"},
+    {"name":"scheduled_exit","status":"FROZEN","calculation":"Friday 17:00 America/New_York unless stopped","action":"exit"},
+    {"name":"per_pair_hard_risk_cap","status":"NOT_PRESENT"},
+    {"name":"currency_concentration_cap","status":"NOT_PRESENT_IN_FAST","effect":"telemetry only"},
+    {"name":"portfolio_gross_net_leverage_cap","status":"NOT_PRESENT_IN_ALPHA_LAYER","effect":"combined portfolio/broker operational decision"},
+    {"name":"correlation_concentration_control","status":"NOT_PRESENT_IN_FAST"},
+    {"name":"drawdown_throttle","status":"NOT_PROMOTED"},
+    {"name":"two_hour_path_logic","status":"SHADOW_REJECTED_AS_FAST_MODIFIER","effect":"zero FAST authority"},
+    {"name":"OFI_consensus","status":"SHADOW_TELEMETRY","effect":"zero FAST authority"},
+    {"name":"COT_PCA_options","status":"SHADOW_RESEARCH","effect":"zero FAST authority"},
+    {"name":"state_dependent_broker_leverage","status":"REJECTED_FOR_NOW","effect":"fixed leverage scenario testing only"}
+  ]
+}
