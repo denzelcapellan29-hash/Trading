@@ -9,6 +9,9 @@ description = "Broker-agnostic combined portfolio production infrastructure with
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+replay = ["pandas>=2.0", "numpy>=1.26"]
+
 [project.scripts]
 trading-prod = "trading_prod.cli:main"
 
