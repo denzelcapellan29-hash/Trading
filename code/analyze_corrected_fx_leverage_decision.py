@@ -17,7 +17,10 @@ def metrics(r: pd.Series) -> dict:
     r = pd.Series(r).dropna().astype(float)
     curve = (1 + r).cumprod()
     dd = curve / curve.cummax() - 1
-    years = len(r) / PPY
+    if isinstance(r.index, pd.DatetimeIndex) and len(r) > 1:
+        years = (r.index[-1] - r.index[0]).days / 365.25
+    else:
+        years = len(r) / PPY
     ann = r.mean() * PPY
     vol = r.std(ddof=1) * np.sqrt(PPY)
     downside = np.sqrt(np.mean(np.minimum(r.values, 0.0) ** 2)) * np.sqrt(PPY)
@@ -186,7 +189,9 @@ def load_notional(fx_fast_package: Path, alt_parity_package: Path):
     risk = val[["alt_riskmatch_scale"]].copy()
     risk.index.name = "week"
     ae = ae.merge(rs2.reset_index(), on="week", how="left").merge(risk.reset_index(), on="week", how="left")
-    ae["eff_alt_scale"] = ae["scale"] * ae["router_10vol_scale"].fillna(0) * ae["alt_riskmatch_scale"].fillna(0)
+    ae["eff_alt_scale"] = (
+        ae["scale"] * ae["router_10vol_scale"].fillna(0) * ae["alt_riskmatch_scale"].fillna(0)
+    )
     ae["alt_gross_rm"] = ae["gross"] * ae["eff_alt_scale"]
 
     ccys = [c[2:] for c in ae.columns if c.startswith("e_")]
@@ -194,11 +199,16 @@ def load_notional(fx_fast_package: Path, alt_parity_package: Path):
         ae[f"alt_{c}"] = ae[f"e_{c}"] * ae["eff_alt_scale"]
 
     fastw = fr[["entry_gross_notional_equity"]].copy()
-    fp = fc.pivot_table(index="date", columns="currency", values="net_currency_exposure_equity", aggfunc="sum").fillna(0)
+    fp = fc.pivot_table(
+        index="date", columns="currency", values="net_currency_exposure_equity", aggfunc="sum"
+    ).fillna(0)
+
     common_ccys = sorted(set(ccys) & set(fp.columns))
     a = ae.merge(fastw.reset_index().rename(columns={"date": "week"}), on="week", how="left")
     a = a.merge(fp.reset_index().rename(columns={"date": "week"}), on="week", how="left")
-    a["fx_gross_1x"] = 0.65 * a["entry_gross_notional_equity"].fillna(0) + 0.35 * a["alt_gross_rm"].fillna(0)
+    a["fx_gross_1x"] = (
+        0.65 * a["entry_gross_notional_equity"].fillna(0) + 0.35 * a["alt_gross_rm"].fillna(0)
+    )
     for c in common_ccys:
         a[f"fx_{c}_1x"] = 0.65 * a[c].fillna(0) + 0.35 * a[f"alt_{c}"].fillna(0)
     a["fx_max_ccy_1x"] = a[[f"fx_{c}_1x" for c in common_ccys]].abs().max(axis=1)
@@ -216,6 +226,7 @@ def main():
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+
     protected, noput = load_combined(Path(args.combined_data))
 
     grids = []
@@ -242,9 +253,14 @@ def main():
 
     stress = corr_vol_stress(protected["EQ_C20"], protected["FX_65FAST_35ALT"], LEVERAGES)
     stress.to_csv(out / "04_correlation_volatility_break.csv", index=False)
+
     adv = adversarial(protected["EQ_C20"], protected["FX_65FAST_35ALT"], LEVERAGES)
     adv.to_csv(out / "05_adversarial_26week_stress.csv", index=False)
-    boot = bootstrap(protected["EQ_C20"], protected["FX_65FAST_35ALT"], LEVERAGES, reps=args.bootstrap, block=26)
+
+    boot = bootstrap(
+        protected["EQ_C20"], protected["FX_65FAST_35ALT"], LEVERAGES,
+        reps=args.bootstrap, block=26
+    )
     boot.to_csv(out / "06_block_bootstrap_summary.csv", index=False)
 
     ex = load_notional(Path(args.fx_fast_data), Path(args.alt_parity_data))
@@ -296,8 +312,8 @@ def main():
         })
     pd.DataFrame(rows).to_csv(out / "08_decision_scorecard.csv", index=False)
 
-    import json
     with open(out / "00_methodology.json", "w") as f:
+        import json
         json.dump({
             "alignment": "Corrected realized-time join: Phase-6 equity signal-week labels shifted forward 7 days before FX join.",
             "portfolio": "0.5 * protected Equity+C20 + 0.5 * L * validated 65FAST/35ALT",
