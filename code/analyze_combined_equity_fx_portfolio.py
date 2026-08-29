@@ -19,6 +19,12 @@ def load_equity(path: Path) -> pd.DataFrame:
     with zipfile.ZipFile(path) as z:
         name = next(n for n in z.namelist() if n.endswith('14_weekly_protected_plus_corridor_accept.csv'))
         x = pd.read_csv(z.open(name), parse_dates=['period_end']).set_index('period_end').sort_index()
+    # Phase-6 equity rows are labeled by the signal/rebalance Friday even though
+    # the contained return realizes over the following week. Convert to the
+    # actual realization-week Friday before joining to FAST, whose weekly rows
+    # are already labeled by the actual Monday-entry trade week's Friday.
+    x.index = x.index + pd.Timedelta(days=7)
+    x.index.name = 'period_end'
     return x
 
 
@@ -234,9 +240,7 @@ def main():
     for fxname in ['FAST','FX_65FAST_35ALT']:
         fb=worst_block(panel[fxname])
         es=np.sort(eb[2]); fs=np.sort(fb[2])
-        for label,w,L in [
-            ('PRODUCTION_BASE',0.5,1.0),('BALANCED',0.4,1.5),('GROWTH',1/3,2.0),('FX50_2X',0.5,2.0),('FX50_2P5X',0.5,2.5),('FX50_3X',0.5,3.0)
-        ]:
+        for label,w,L in [('PRODUCTION_BASE',0.5,1.0),('BALANCED',0.4,1.5),('GROWTH',1/3,2.0),('FX50_2X',0.5,2.0),('FX50_2P5X',0.5,2.5),('FX50_3X',0.5,3.0)]:
             rr=(1-w)*es+w*L*fs
             m=perf_arr(rr)
             rows.append({'fx_stream':fxname,'candidate':label,'equity_worst_block_return':eb[0],
@@ -280,14 +284,12 @@ def main():
         fxgross=scale*fast_gross
         totalgross=(1-w)+fxgross
         curr=scale*weekly_max_currency
-        rows.append({
-            'candidate':label,'fx_return_scale_w_times_L':scale,
+        rows.append({'candidate':label,'fx_return_scale_w_times_L':scale,
             'fx_gross_notional_median':fxgross.median(),'fx_gross_notional_p95':fxgross.quantile(.95),'fx_gross_notional_max':fxgross.max(),
             'total_gross_ex_put_median':totalgross.median(),'total_gross_ex_put_p95':totalgross.quantile(.95),'total_gross_ex_put_max':totalgross.max(),
             'max_abs_single_currency_median':curr.median(),'max_abs_single_currency_p95':curr.quantile(.95),'max_abs_single_currency_max':curr.max(),
             'share_weeks_currency_gt_0p75':(curr>0.75).mean(),'share_weeks_currency_gt_1p00':(curr>1.00).mean(),
-            'active_trades_median':fast_ntrades.median(),'active_trades_p95':fast_ntrades.quantile(.95),'active_trades_max':fast_ntrades.max(),
-        })
+            'active_trades_median':fast_ntrades.median(),'active_trades_p95':fast_ntrades.quantile(.95),'active_trades_max':fast_ntrades.max()})
     pd.DataFrame(rows).to_csv(out/'15_fast_notional_currency_concentration.csv',index=False)
 
     rows=[]
@@ -304,7 +306,7 @@ def main():
 
     methodology={
         'sample_start': str(panel.index.min().date()), 'sample_end': str(panel.index.max().date()), 'weeks': len(panel),
-        'alignment': 'Friday period-end exact join; FAST weekly date is actual trade-week Friday and is not shifted.',
+        'alignment': 'Phase-6 equity signal-week labels are shifted forward 7 days into actual realization-week Friday before exact joining to FAST; FAST is not shifted.',
         'equity_definition': 'Corridor allocation c replaces c of preferred gross alpha; 20% put-overlay additive remains within the equity sleeve.',
         'primary_combination_convention': 'R=(1-w_FX)*R_equity + w_FX*L_FX*R_FX. Only FX sleeve is levered. Put overlay scales with equity sleeve in primary grid.',
         'hedge_sensitivity': 'Separate diagnostic also holds 20% put overlay fixed at account NAV rather than scaling with equity sleeve.',
