@@ -100,8 +100,23 @@ class IBKRTWSAdapter(BrokerAdapter):
             def nextValidId(self, orderId):
                 self.next_order_id = int(orderId); self.next_id_event.set()
 
-            def error(self, reqId, errorCode, errorString, advancedOrderRejectJson=""):
-                adapter._errors.append((int(reqId), int(errorCode), str(errorString), str(advancedOrderRejectJson or "")))
+            def error(self, reqId, *args):
+                """Handle both legacy and TWS API >10.33 error callback signatures."""
+                advanced = ""
+                if len(args) == 2:
+                    errorCode, errorString = args
+                elif len(args) == 3:
+                    errorCode, errorString, advanced = args
+                elif len(args) >= 4:
+                    _error_time, errorCode, errorString, advanced = args[:4]
+                else:
+                    adapter._errors.append(
+                        (int(reqId), -1, f"UNPARSED_ERROR_ARGS:{args!r}", "")
+                    )
+                    return
+                adapter._errors.append(
+                    (int(reqId), int(errorCode), str(errorString), str(advanced or ""))
+                )
 
             def position(self, account, contract, position, avgCost):
                 adapter._positions.append(BrokerPosition(from_ib_contract(contract), float(position), float(avgCost), str(account)))
@@ -160,7 +175,9 @@ class IBKRTWSAdapter(BrokerAdapter):
         self._thread = threading.Thread(target=self.app.run, name="ibkr-tws-api", daemon=True)
         self._thread.start()
         if not self.app.next_id_event.wait(self.connect_timeout_seconds):
-            raise TimeoutError("IBKR did not provide nextValidId before timeout")
+            raise TimeoutError(
+                f"IBKR did not provide nextValidId before timeout; recent_api_errors={self._errors[-10:]}"
+            )
 
     def disconnect(self) -> None:
         if self.app.isConnected(): self.app.disconnect()
