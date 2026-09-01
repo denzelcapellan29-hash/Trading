@@ -9,11 +9,13 @@ does not consume hundreds of simultaneous market-data lines.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, time as dtime, timezone
+from decimal import Decimal
 import csv
 import threading
 import time
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from typing import Iterable
 
 from .store import DailyBar, EquityDataStore
@@ -64,6 +66,42 @@ def contract_for(row: UniverseRow):
     c.currency = row.currency
     c.exchange = row.exchange
     return c
+
+
+def completed_daily_end_datetime(
+    *,
+    now_utc: datetime | None = None,
+    lag_minutes: int = 30,
+) -> str:
+    """Return a conservative UTC endDateTime for completed US daily bars.
+
+    - During the US trading day (or before 16:30 ET), request through the
+      previous weekday so the current partial daily bar cannot enter the store.
+    - At/after 16:30 ET on a weekday, request through `now - lag_minutes`.
+    - On weekends, request through the previous weekday.
+
+    The returned format is IBKR's supported UTC form: YYYYMMDD-HH:mm:ss.
+    """
+    if lag_minutes < 20:
+        raise ValueError("lag_minutes must be at least 20 for delayed-data mode")
+
+    now_utc = now_utc or datetime.now(timezone.utc)
+    if now_utc.tzinfo is None:
+        now_utc = now_utc.replace(tzinfo=timezone.utc)
+
+    ny = ZoneInfo("America/New_York")
+    now_ny = now_utc.astimezone(ny)
+
+    if now_ny.weekday() < 5 and now_ny.time() >= dtime(16, 30):
+        end_ny = now_ny - timedelta(minutes=lag_minutes)
+    else:
+        d = now_ny.date() - timedelta(days=1)
+        while d.weekday() >= 5:
+            d -= timedelta(days=1)
+        end_ny = datetime.combine(d, dtime(23, 59, 59), tzinfo=ny)
+
+    end_utc = end_ny.astimezone(timezone.utc)
+    return end_utc.strftime("%Y%m%d-%H:%M:%S")
 
 
 class IBKREquityDailyClient:
@@ -160,6 +198,9 @@ class IBKREquityDailyClient:
             raise TimeoutError(
                 f"IBKR connection did not reach nextValidId; recent_api_messages={recent}"
             )
+        # Option 2 production mode: allow free delayed data where live API
+        # entitlements are absent. IBKR documents market data type 3 as delayed.
+        self.app.reqMarketDataType(3)
 
     def disconnect(self) -> None:
         if self.app.isConnected():
@@ -183,6 +224,9 @@ class IBKREquityDailyClient:
         details = self._details.get(req, [])
         if not details:
             raise RuntimeError(f"no IBKR contract resolved for {row.ticker}: {self._errors.get(req)}")
+
+        # Prefer exact USD contract and SMART-capable stock/index. Ambiguous symbols
+        # should be fixed explicitly in the universe manifest rather than guessed.
         cd = details[0]
         c = cd.contract
         self.store.upsert_contract(
@@ -217,8 +261,16 @@ class IBKREquityDailyClient:
             req = self._next_req()
             self._bars[req] = []
             self.app.reqHistoricalData(
-                req, contract, end_datetime, duration, "1 day", "TRADES",
-                1 if use_rth else 0, 1, False, [],
+                req,
+                contract,
+                end_datetime,
+                duration,
+                "1 day",
+                "TRADES",
+                1 if use_rth else 0,
+                1,
+                False,
+                [],
             )
             if not self._done[req].wait(self.request_timeout_seconds):
                 self.app.cancelHistoricalData(req)
@@ -239,6 +291,7 @@ class IBKREquityDailyClient:
             received = datetime.now(timezone.utc).isoformat()
             normalized = []
             for b in bars:
+                # 1-day bars arrive as yyyyMMdd in TWS API.
                 ref = str(b.date)
                 if len(ref) >= 8 and ref[:8].isdigit():
                     ref = f"{ref[:4]}-{ref[4:6]}-{ref[6:8]}"
@@ -263,14 +316,26 @@ class IBKREquityDailyClient:
         *,
         duration: str = "3 Y",
         use_rth: bool = True,
+        end_datetime: str | None = None,
+        end_lag_minutes: int = 30,
     ) -> dict:
+        # Freeze one end timestamp for the entire batch so every symbol is
+        # requested through the same completed-data cutoff.
+        effective_end = end_datetime or completed_daily_end_datetime(
+            lag_minutes=end_lag_minutes
+        )
+
         results = []
         for row in rows:
             started = time.time()
             try:
                 contract = self.resolve_contract(row)
                 n = self.request_daily_bars(
-                    row=row, contract=contract, duration=duration, use_rth=use_rth
+                    row=row,
+                    contract=contract,
+                    duration=duration,
+                    end_datetime=effective_end,
+                    use_rth=use_rth,
                 )
                 results.append({"ticker": row.ticker, "status": "OK", "bars": n})
             except Exception as exc:
@@ -283,5 +348,7 @@ class IBKREquityDailyClient:
             "requested": len(results),
             "ok": sum(r["status"] == "OK" for r in results),
             "failed": sum(r["status"] != "OK" for r in results),
+            "historical_end_datetime_utc": effective_end,
+            "market_data_mode": "DELAYED",
             "results": results,
         }
