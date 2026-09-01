@@ -23,6 +23,10 @@ def main():
     ap.add_argument("--duration", default="3 Y")
     ap.add_argument("--ticker", action="append", help="Restrict to one or more tickers")
     ap.add_argument("--pacing-seconds", type=float, default=0.35)
+    ap.add_argument("--end-lag-minutes", type=int, default=30,
+                    help="Delayed-data safety lag; minimum 20 minutes")
+    ap.add_argument("--end-datetime",
+                    help="Optional explicit IBKR historical endDateTime; otherwise a completed-bar cutoff is chosen automatically")
     args = ap.parse_args()
 
     rows = load_universe_csv(args.universe)
@@ -37,7 +41,13 @@ def main():
     )
     client.connect()
     try:
-        result = client.sync_universe(rows, duration=args.duration, use_rth=True)
+        result = client.sync_universe(
+            rows,
+            duration=args.duration,
+            use_rth=True,
+            end_datetime=args.end_datetime,
+            end_lag_minutes=args.end_lag_minutes,
+        )
     finally:
         client.disconnect()
 
