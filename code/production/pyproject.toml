@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trading-production"
+version = "0.1.0"
+description = "Broker-agnostic combined portfolio production infrastructure with IBKR TWS adapter"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+replay = ["pandas>=2.0", "numpy>=1.26"]
+equity = ["pandas>=2.0", "numpy>=1.26"]
+
+[project.scripts]
+trading-prod = "trading_prod.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
