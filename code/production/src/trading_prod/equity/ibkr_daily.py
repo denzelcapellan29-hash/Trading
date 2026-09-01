@@ -103,7 +103,30 @@ class IBKREquityDailyClient:
             def contractDetailsEnd(self, reqId):
                 owner._done.setdefault(int(reqId), threading.Event()).set()
 
-            def error(self, reqId, errorCode, errorString, advancedOrderRejectJson=""):
+            def error(self, reqId, *args):
+                """Handle both legacy and TWS API >10.33 error callback signatures."""
+                error_time = None
+                advanced = ""
+                if len(args) == 2:
+                    errorCode, errorString = args
+                elif len(args) == 3:
+                    errorCode, errorString, advanced = args
+                elif len(args) >= 4:
+                    error_time, errorCode, errorString, advanced = args[:4]
+                else:
+                    owner._connection_messages.append(
+                        {"reqId": reqId, "raw_args": repr(args), "parse_error": True}
+                    )
+                    return
+
+                rec = {
+                    "reqId": int(reqId),
+                    "errorTime": None if error_time is None else str(error_time),
+                    "errorCode": int(errorCode),
+                    "errorString": str(errorString),
+                    "advancedOrderRejectJson": str(advanced or ""),
+                }
+                owner._connection_messages.append(rec)
                 owner._errors.setdefault(int(reqId), []).append(
                     (int(errorCode), str(errorString))
                 )
@@ -126,13 +149,17 @@ class IBKREquityDailyClient:
         self._details: dict[int, list] = {}
         self._done: dict[int, threading.Event] = {}
         self._errors: dict[int, list[tuple[int, str]]] = {}
+        self._connection_messages: list[dict] = []
 
     def connect(self) -> None:
         self.app.connect(self.host, self.port, self.client_id)
         self._thread = threading.Thread(target=self.app.run, daemon=True, name="ibkr-equity-daily")
         self._thread.start()
         if not self.app.ready.wait(20):
-            raise TimeoutError("IBKR connection did not reach nextValidId")
+            recent = self._connection_messages[-10:]
+            raise TimeoutError(
+                f"IBKR connection did not reach nextValidId; recent_api_messages={recent}"
+            )
 
     def disconnect(self) -> None:
         if self.app.isConnected():
