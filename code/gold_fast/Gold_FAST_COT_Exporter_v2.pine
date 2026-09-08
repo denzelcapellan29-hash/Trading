@@ -1,0 +1,67 @@
+//@version=6
+indicator("Gold FAST COT Exporter v2", shorttitle="Gold FAST COT v2",
+     overlay=false, dynamic_requests=true, max_bars_back=5000)
+
+import TradingView/LibraryCOT/6 as cot
+
+string GROUP = "COMEX Gold COT"
+string futuresSymbol = input.symbol("COMEX:GC1!", "Gold futures symbol", group=GROUP)
+bool includeOptions = input.bool(false, "Include options", group=GROUP)
+string customCode = input.string("", "Optional custom CFTC code", group=GROUP,
+     tooltip="Leave blank to use TradingView's current code for COMEX:GC1!.")
+
+string autoCode = cot.getCFTCCode(futuresSymbol)
+string code = str.length(customCode) > 0 ? customCode : autoCode
+
+float disOI = cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode=code, includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All")
+float disLong = cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode=code, includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Long", metricType="All")
+float disShort = cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode=code, includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Short", metricType="All")
+float legOI = cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode=code, includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All")
+float legLong = cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode=code, includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Long", metricType="All")
+float legShort = cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode=code, includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Short", metricType="All")
+
+f_obs_change_time(float s) =>
+    bool changed = not na(s) and (na(s[1]) or s != s[1])
+    ta.valuewhen(changed, time, 0)
+
+plot(disOI, "EXPORT_COT_DISAGG_OI", display=display.data_window)
+plot(disLong, "EXPORT_COT_DISAGG_MM_LONG", display=display.data_window)
+plot(disShort, "EXPORT_COT_DISAGG_MM_SHORT", display=display.data_window)
+plot(legOI, "EXPORT_COT_LEGACY_OI", display=display.data_window)
+plot(legLong, "EXPORT_COT_LEGACY_NC_LONG", display=display.data_window)
+plot(legShort, "EXPORT_COT_LEGACY_NC_SHORT", display=display.data_window)
+plot(not na(disOI) and disOI != 0 ? (disLong-disShort)/disOI : na,
+     "EXPORT_DERIVED_COT_DISAGG_MM_NET_OI", display=display.data_window)
+plot(not na(legOI) and legOI != 0 ? (legLong-legShort)/legOI : na,
+     "EXPORT_DERIVED_COT_LEGACY_NC_NET_OI", display=display.data_window)
+plot(float(f_obs_change_time(disOI)), "EXPORT_COT_DISAGG_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(legOI)), "EXPORT_COT_LEGACY_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(time_close), "EXPORT_BAR_END_TIME", display=display.data_window)
+plot(barstate.isconfirmed ? 1.0 : 0.0, "EXPORT_BAR_CONFIRMED", display=display.data_window)
+
+var table status = table.new(position.top_right, 2, 6, border_width=1)
+if barstate.islast
+    table.cell(status, 0, 0, "Gold FAST COT v2")
+    table.cell(status, 1, 0, timeframe.period)
+    table.cell(status, 0, 1, "CFTC code")
+    table.cell(status, 1, 1, code)
+    table.cell(status, 0, 2, "Requests")
+    table.cell(status, 1, 2, "6 / 40")
+    table.cell(status, 0, 3, "Disagg")
+    table.cell(status, 1, 3, na(disOI) ? "CHECK" : "OK")
+    table.cell(status, 0, 4, "Legacy")
+    table.cell(status, 1, 4, na(legOI) ? "CHECK" : "OK")
+    table.cell(status, 0, 5, "Export")
+    table.cell(status, 1, 5, "Chart data CSV")
