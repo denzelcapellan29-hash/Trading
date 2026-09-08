@@ -8,6 +8,7 @@ indicator("Gold FAST Core Surface Exporter v3", shorttitle="Gold FAST Core v3",
 //   - 1W chart: native weekly primary/secondary FAST panel
 //
 // v3 intentionally removes observed-change ta.valuewhen() logic and dynamic
+// Corrected ACWI exchange: NASDAQ:ACWI (not AMEX:ACWI).
 // helper requests from v2. Python can infer value-change dates from the raw
 // exported series. The goal here is a minimal, hard-to-break raw data surface.
 //
@@ -33,7 +34,7 @@ string brentSymbol   = input.symbol("TVC:UKOIL", "Brent proxy", group=GROUP_RISK
 string gvzSymbol     = input.symbol("CBOE:GVZ", "Gold ETF volatility index", group=GROUP_RISK)
 string vixSymbol     = input.symbol("CBOE:VIX", "VIX", group=GROUP_RISK)
 string spxSymbol     = input.symbol("SP:SPX", "S&P 500", group=GROUP_RISK)
-string acwiSymbol    = input.symbol("AMEX:ACWI", "MSCI ACWI ETF proxy", group=GROUP_RISK)
+string acwiSymbol    = input.symbol("NASDAQ:ACWI", "MSCI ACWI ETF proxy", group=GROUP_RISK)
 
 float gcC = request.security(gcSymbol, timeframe.period, close,
      gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off, ignore_invalid_symbol=true)
