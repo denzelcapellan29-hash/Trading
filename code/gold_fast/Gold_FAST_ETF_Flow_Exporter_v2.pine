@@ -1,0 +1,99 @@
+//@version=6
+indicator("Gold FAST ETF Flow Exporter v2", shorttitle="Gold FAST ETF v2",
+     overlay=false, dynamic_requests=true, max_bars_back=5000)
+
+string GROUP_GOLD = "Gold ETF flows"
+string gld  = input.symbol("AMEX:GLD", "GLD", group=GROUP_GOLD)
+string iau  = input.symbol("AMEX:IAU", "IAU", group=GROUP_GOLD)
+string gldm = input.symbol("AMEX:GLDM", "GLDM", group=GROUP_GOLD)
+string sgol = input.symbol("AMEX:SGOL", "SGOL", group=GROUP_GOLD)
+
+string GROUP_RISK = "Equity / bond ETF flows"
+string spy = input.symbol("AMEX:SPY", "SPY", group=GROUP_RISK)
+string ivv = input.symbol("AMEX:IVV", "IVV", group=GROUP_RISK)
+string agg = input.symbol("AMEX:AGG", "AGG", group=GROUP_RISK)
+string bnd = input.symbol("NASDAQ:BND", "BND", group=GROUP_RISK)
+
+f_flow(string symbol) =>
+    request.financial(symbol, "FUND_FLOWS", "D",
+        gaps=barmerge.gaps_off, ignore_invalid_symbol=true)
+
+f_aum(string symbol) =>
+    request.financial(symbol, "AUM", "D",
+        gaps=barmerge.gaps_off, ignore_invalid_symbol=true)
+
+f_obs_change_time(float s) =>
+    bool changed = not na(s) and (na(s[1]) or s != s[1])
+    ta.valuewhen(changed, time, 0)
+
+float gldF  = f_flow(gld)
+float gldA  = f_aum(gld)
+float iauF  = f_flow(iau)
+float iauA  = f_aum(iau)
+float gldmF = f_flow(gldm)
+float gldmA = f_aum(gldm)
+float sgolF = f_flow(sgol)
+float sgolA = f_aum(sgol)
+float spyF = f_flow(spy)
+float spyA = f_aum(spy)
+float ivvF = f_flow(ivv)
+float ivvA = f_aum(ivv)
+float aggF = f_flow(agg)
+float aggA = f_aum(agg)
+float bndF = f_flow(bnd)
+float bndA = f_aum(bnd)
+
+plot(gldF, "EXPORT_GLD_FUND_FLOWS", display=display.data_window)
+plot(gldA, "EXPORT_GLD_AUM", display=display.data_window)
+plot(iauF, "EXPORT_IAU_FUND_FLOWS", display=display.data_window)
+plot(iauA, "EXPORT_IAU_AUM", display=display.data_window)
+plot(gldmF, "EXPORT_GLDM_FUND_FLOWS", display=display.data_window)
+plot(gldmA, "EXPORT_GLDM_AUM", display=display.data_window)
+plot(sgolF, "EXPORT_SGOL_FUND_FLOWS", display=display.data_window)
+plot(sgolA, "EXPORT_SGOL_AUM", display=display.data_window)
+plot(spyF, "EXPORT_SPY_FUND_FLOWS", display=display.data_window)
+plot(spyA, "EXPORT_SPY_AUM", display=display.data_window)
+plot(ivvF, "EXPORT_IVV_FUND_FLOWS", display=display.data_window)
+plot(ivvA, "EXPORT_IVV_AUM", display=display.data_window)
+plot(aggF, "EXPORT_AGG_FUND_FLOWS", display=display.data_window)
+plot(aggA, "EXPORT_AGG_AUM", display=display.data_window)
+plot(bndF, "EXPORT_BND_FUND_FLOWS", display=display.data_window)
+plot(bndA, "EXPORT_BND_AUM", display=display.data_window)
+
+float goldFlowRaw = nz(gldF,0) + nz(iauF,0) + nz(gldmF,0) + nz(sgolF,0)
+float equityFlowRaw = nz(spyF,0) + nz(ivvF,0)
+float bondFlowRaw = nz(aggF,0) + nz(bndF,0)
+
+plot(goldFlowRaw, "EXPORT_DERIVED_GOLD_ETF_FLOW_RAW_SUM", display=display.data_window)
+plot(equityFlowRaw - bondFlowRaw, "EXPORT_DERIVED_EQUITY_MINUS_BOND_FLOW_RAW", display=display.data_window)
+plot(not na(gldA) and gldA != 0 ? gldF/gldA : na, "EXPORT_DERIVED_GLD_FLOW_OVER_AUM", display=display.data_window)
+plot(not na(iauA) and iauA != 0 ? iauF/iauA : na, "EXPORT_DERIVED_IAU_FLOW_OVER_AUM", display=display.data_window)
+plot(not na(gldmA) and gldmA != 0 ? gldmF/gldmA : na, "EXPORT_DERIVED_GLDM_FLOW_OVER_AUM", display=display.data_window)
+plot(not na(sgolA) and sgolA != 0 ? sgolF/sgolA : na, "EXPORT_DERIVED_SGOL_FLOW_OVER_AUM", display=display.data_window)
+
+plot(float(f_obs_change_time(gldF)), "EXPORT_GLD_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(iauF)), "EXPORT_IAU_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(gldmF)), "EXPORT_GLDM_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(sgolF)), "EXPORT_SGOL_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(spyF)), "EXPORT_SPY_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(ivvF)), "EXPORT_IVV_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(aggF)), "EXPORT_AGG_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(bndF)), "EXPORT_BND_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+
+plot(float(time_close), "EXPORT_BAR_END_TIME", display=display.data_window)
+plot(barstate.isconfirmed ? 1.0 : 0.0, "EXPORT_BAR_CONFIRMED", display=display.data_window)
+
+var table status = table.new(position.top_right, 2, 6, border_width=1)
+if barstate.islast
+    table.cell(status, 0, 0, "Gold FAST ETF v2")
+    table.cell(status, 1, 0, timeframe.period)
+    table.cell(status, 0, 1, "Use")
+    table.cell(status, 1, 1, timeframe.isdaily ? "1D OK" : "USE 1D")
+    table.cell(status, 0, 2, "Requests")
+    table.cell(status, 1, 2, "16 / 40")
+    table.cell(status, 0, 3, "Gold ETF")
+    table.cell(status, 1, 3, na(gldF) and na(iauF) ? "CHECK" : "OK")
+    table.cell(status, 0, 4, "Risk ETF")
+    table.cell(status, 1, 4, na(spyF) and na(aggF) ? "CHECK" : "OK")
+    table.cell(status, 0, 5, "Export")
+    table.cell(status, 1, 5, "Chart data CSV")
