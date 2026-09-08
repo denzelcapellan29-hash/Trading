@@ -1,0 +1,289 @@
+//@version=6
+indicator("Gold FAST Raw Surface Exporter", shorttitle="Gold FAST Export", overlay=false, dynamic_requests=true, max_bars_back=5000)
+
+// ============================================================================
+// GOLD FAST RAW SURFACE EXPORTER
+// Research purpose: export a minimally transformed daily surface for Python.
+//
+// Recommended use:
+//   1) Open OANDA:XAUUSD on a 1D chart.
+//   2) Add this indicator.
+//   3) Export chart data to CSV and include indicator values.
+//   4) Do NOT pre-compress/standardize these series in TradingView. Python should
+//      own transformations, integration-order tests, cointegration searches,
+//      rolling FAST regressions, and causal publication-lag treatment.
+//
+// Request budget (Pine v6, non-professional / Premium ceiling = 40 unique calls):
+//   Market/economic security requests: 16
+//   ETF FUND_FLOWS/AUM requests:       16
+//   COT requests:                       6
+//   TOTAL:                             38
+//
+// Notes:
+// - request.financial ETF fields FUND_FLOWS and AUM are daily fields (period "D").
+// - COT uses official TradingView LibraryCOT with COMEX Gold CFTC code 088691.
+// - *_OBS_CHANGE_TIME fields are OBSERVED VALUE-CHANGE timestamps on the chart,
+//   not guaranteed vendor publication timestamps. They are included as audit aids.
+// - Slow series are intentionally exported raw and forward-filled by TradingView.
+// ============================================================================
+
+import TradingView/LibraryCOT/6 as cot
+
+// ------------------------- Inputs: target / market data -----------------------
+string GROUP_TARGET = "Target / Gold"
+string xauSymbol     = input.symbol("OANDA:XAUUSD", "Spot gold", group=GROUP_TARGET)
+string gcSymbol      = input.symbol("COMEX:GC1!", "COMEX Gold continuous", group=GROUP_TARGET)
+
+string GROUP_FX = "FX / USD opportunity cost"
+string eurusdSymbol  = input.symbol("OANDA:EURUSD", "EURUSD", group=GROUP_FX)
+string usdjpySymbol  = input.symbol("OANDA:USDJPY", "USDJPY", group=GROUP_FX)
+string usdcnySymbol  = input.symbol("FX_IDC:USDCNY", "USDCNY", group=GROUP_FX)
+string audusdSymbol  = input.symbol("OANDA:AUDUSD", "AUDUSD", group=GROUP_FX)
+string dxySymbol     = input.symbol("TVC:DXY", "DXY", group=GROUP_FX)
+
+string GROUP_RATES = "Rates / inflation / liquidity"
+string dgs10Symbol   = input.symbol("FRED:DGS10", "US 10Y nominal yield", group=GROUP_RATES)
+string t10yieSymbol  = input.symbol("FRED:T10YIE", "US 10Y breakeven", group=GROUP_RATES)
+string dfii10Symbol  = input.symbol("FRED:DFII10", "US 10Y real yield", group=GROUP_RATES)
+string walclSymbol   = input.symbol("FRED:WALCL", "Federal Reserve total assets", group=GROUP_RATES)
+
+string GROUP_RISK = "Risk / geopolitics / competing assets"
+string brentSymbol   = input.symbol("TVC:UKOIL", "Brent proxy", group=GROUP_RISK)
+string gvzSymbol     = input.symbol("CBOE:GVZ", "Gold ETF volatility index", group=GROUP_RISK)
+string vixSymbol     = input.symbol("CBOE:VIX", "VIX", group=GROUP_RISK)
+string spxSymbol     = input.symbol("SP:SPX", "S&P 500", group=GROUP_RISK)
+string acwiSymbol    = input.symbol("AMEX:ACWI", "MSCI ACWI ETF proxy", group=GROUP_RISK)
+
+// ------------------------------- ETF inputs ----------------------------------
+string GROUP_GOLD_ETF = "Gold ETF flows"
+string gldSymbol  = input.symbol("AMEX:GLD", "GLD", group=GROUP_GOLD_ETF)
+string iauSymbol  = input.symbol("AMEX:IAU", "IAU", group=GROUP_GOLD_ETF)
+string gldmSymbol = input.symbol("AMEX:GLDM", "GLDM", group=GROUP_GOLD_ETF)
+string sgolSymbol = input.symbol("AMEX:SGOL", "SGOL", group=GROUP_GOLD_ETF)
+
+string GROUP_RISK_FLOW = "Equity / bond ETF flows"
+string spySymbol = input.symbol("AMEX:SPY", "SPY", group=GROUP_RISK_FLOW)
+string ivvSymbol = input.symbol("AMEX:IVV", "IVV", group=GROUP_RISK_FLOW)
+string aggSymbol = input.symbol("AMEX:AGG", "AGG", group=GROUP_RISK_FLOW)
+string bndSymbol = input.symbol("NASDAQ:BND", "BND", group=GROUP_RISK_FLOW)
+
+// ------------------------------ COT inputs -----------------------------------
+string GROUP_COT = "COMEX Gold COT"
+bool cotIncludeOptions = input.bool(false, "Include options in COT", group=GROUP_COT,
+     tooltip="Default false matches futures-only positioning. Toggle only if you intentionally want futures + options.")
+string goldCFTCCode = input.string("088691", "Gold CFTC code", group=GROUP_COT,
+     tooltip="COMEX Gold. Current CFTC code used by TradingView COT data.")
+
+// --------------------------- Request helper functions ------------------------
+f_close(string symbol) =>
+    request.security(symbol, "1D", close, gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off, ignore_invalid_symbol=true)
+
+f_ohlc(string symbol) =>
+    request.security(symbol, "1D", [open, high, low, close], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off, ignore_invalid_symbol=true)
+
+f_etf_flow(string symbol) =>
+    request.financial(symbol, "FUND_FLOWS", "D", gaps=barmerge.gaps_off, ignore_invalid_symbol=true)
+
+f_etf_aum(string symbol) =>
+    request.financial(symbol, "AUM", "D", gaps=barmerge.gaps_off, ignore_invalid_symbol=true)
+
+f_obs_change_time(float s) =>
+    bool changed = not na(s) and (na(s[1]) or s != s[1])
+    ta.valuewhen(changed, time, 0)
+
+// ------------------------------- Gold target ---------------------------------
+[xauO, xauH, xauL, xauC] = f_ohlc(xauSymbol)
+float gcC = f_close(gcSymbol)
+
+// -------------------------------- FX block ------------------------------------
+float eurusd = f_close(eurusdSymbol)
+float usdjpy = f_close(usdjpySymbol)
+float usdcny = f_close(usdcnySymbol)
+float audusd = f_close(audusdSymbol)
+float dxy    = f_close(dxySymbol)
+
+// -------------------------- Rates / liquidity block ---------------------------
+float dgs10  = f_close(dgs10Symbol)
+float t10yie = f_close(t10yieSymbol)
+float dfii10 = f_close(dfii10Symbol)
+float walcl  = f_close(walclSymbol)
+
+// ---------------------------- Risk / asset block ------------------------------
+float brent = f_close(brentSymbol)
+float gvz   = f_close(gvzSymbol)
+float vix   = f_close(vixSymbol)
+float spx   = f_close(spxSymbol)
+float acwi  = f_close(acwiSymbol)
+
+// ------------------------------ Gold ETF flows -------------------------------
+float gldFlow  = f_etf_flow(gldSymbol)
+float gldAum   = f_etf_aum(gldSymbol)
+float iauFlow  = f_etf_flow(iauSymbol)
+float iauAum   = f_etf_aum(iauSymbol)
+float gldmFlow = f_etf_flow(gldmSymbol)
+float gldmAum  = f_etf_aum(gldmSymbol)
+float sgolFlow = f_etf_flow(sgolSymbol)
+float sgolAum  = f_etf_aum(sgolSymbol)
+
+// -------------------------- Equity / bond fund flows -------------------------
+float spyFlow = f_etf_flow(spySymbol)
+float spyAum  = f_etf_aum(spySymbol)
+float ivvFlow = f_etf_flow(ivvSymbol)
+float ivvAum  = f_etf_aum(ivvSymbol)
+float aggFlow = f_etf_flow(aggSymbol)
+float aggAum  = f_etf_aum(aggSymbol)
+float bndFlow = f_etf_flow(bndSymbol)
+float bndAum  = f_etf_aum(bndSymbol)
+
+// -------------------------------- COT block -----------------------------------
+// WGC uses gold net long / open interest. We export both the commodity-specific
+// Disaggregated Managed Money representation and the older Legacy Noncommercial
+// representation so Python can decide which has the stronger causal/OOS evidence.
+float cotDisOI = cot.requestCommitmentOfTraders(
+     COTType="Disaggregated", CFTCCode=goldCFTCCode, includeOptions=cotIncludeOptions,
+     metricName="Open Interest", metricDirection="No direction", metricType="All")
+float cotDisMMLong = cot.requestCommitmentOfTraders(
+     COTType="Disaggregated", CFTCCode=goldCFTCCode, includeOptions=cotIncludeOptions,
+     metricName="Managed Money Positions", metricDirection="Long", metricType="All")
+float cotDisMMShort = cot.requestCommitmentOfTraders(
+     COTType="Disaggregated", CFTCCode=goldCFTCCode, includeOptions=cotIncludeOptions,
+     metricName="Managed Money Positions", metricDirection="Short", metricType="All")
+
+float cotLegOI = cot.requestCommitmentOfTraders(
+     COTType="Legacy", CFTCCode=goldCFTCCode, includeOptions=cotIncludeOptions,
+     metricName="Open Interest", metricDirection="No direction", metricType="All")
+float cotLegNCLong = cot.requestCommitmentOfTraders(
+     COTType="Legacy", CFTCCode=goldCFTCCode, includeOptions=cotIncludeOptions,
+     metricName="Noncommercial Positions", metricDirection="Long", metricType="All")
+float cotLegNCShort = cot.requestCommitmentOfTraders(
+     COTType="Legacy", CFTCCode=goldCFTCCode, includeOptions=cotIncludeOptions,
+     metricName="Noncommercial Positions", metricDirection="Short", metricType="All")
+
+// ------------------------- Minimal derived audit fields -----------------------
+// These are conveniences only. Python must recompute them from raw columns.
+float dmfxLog = not na(eurusd) and eurusd > 0 and not na(usdjpy) and usdjpy > 0 ?
+     0.5 * (-math.log(eurusd) + math.log(usdjpy)) : na
+float emfxLog = not na(usdcny) and usdcny > 0 and not na(audusd) and audusd > 0 ?
+     0.5 * (math.log(usdcny) - math.log(audusd)) : na
+float realYieldConstructed = not na(dgs10) and not na(t10yie) ? dgs10 - t10yie : na
+float xauLogRet1D = not na(xauC) and xauC > 0 and not na(xauC[1]) and xauC[1] > 0 ? math.log(xauC / xauC[1]) : na
+
+float goldEtfFlowRaw = nz(gldFlow, 0.0) + nz(iauFlow, 0.0) + nz(gldmFlow, 0.0) + nz(sgolFlow, 0.0)
+float equityFlowRaw  = nz(spyFlow, 0.0) + nz(ivvFlow, 0.0)
+float bondFlowRaw    = nz(aggFlow, 0.0) + nz(bndFlow, 0.0)
+float equityMinusBondFlowRaw = equityFlowRaw - bondFlowRaw
+
+float cotDisNetOI = not na(cotDisOI) and cotDisOI != 0 ? (cotDisMMLong - cotDisMMShort) / cotDisOI : na
+float cotLegNetOI = not na(cotLegOI) and cotLegOI != 0 ? (cotLegNCLong - cotLegNCShort) / cotLegOI : na
+
+int walclChangeTime = f_obs_change_time(walcl)
+int gldChangeTime    = f_obs_change_time(gldFlow)
+int iauChangeTime    = f_obs_change_time(iauFlow)
+int gldmChangeTime   = f_obs_change_time(gldmFlow)
+int sgolChangeTime   = f_obs_change_time(sgolFlow)
+int spyChangeTime    = f_obs_change_time(spyFlow)
+int ivvChangeTime    = f_obs_change_time(ivvFlow)
+int aggChangeTime    = f_obs_change_time(aggFlow)
+int bndChangeTime    = f_obs_change_time(bndFlow)
+int cotDisChangeTime = f_obs_change_time(cotDisOI)
+int cotLegChangeTime = f_obs_change_time(cotLegOI)
+
+// -------------------------------- CSV plots -----------------------------------
+// All plots use display.data_window: they remain exportable without cluttering
+// the pane. Titles intentionally begin EXPORT_ for robust downstream parsing.
+plot(xauO, "EXPORT_XAUUSD_O", display=display.data_window)
+plot(xauH, "EXPORT_XAUUSD_H", display=display.data_window)
+plot(xauL, "EXPORT_XAUUSD_L", display=display.data_window)
+plot(xauC, "EXPORT_XAUUSD_C", display=display.data_window)
+plot(gcC,   "EXPORT_GC1_CLOSE", display=display.data_window)
+
+plot(eurusd, "EXPORT_EURUSD", display=display.data_window)
+plot(usdjpy, "EXPORT_USDJPY", display=display.data_window)
+plot(usdcny, "EXPORT_USDCNY", display=display.data_window)
+plot(audusd, "EXPORT_AUDUSD", display=display.data_window)
+plot(dxy,    "EXPORT_DXY", display=display.data_window)
+
+plot(dgs10,  "EXPORT_US10Y_NOMINAL", display=display.data_window)
+plot(t10yie, "EXPORT_US10Y_BREAKEVEN", display=display.data_window)
+plot(dfii10, "EXPORT_US10Y_REAL_DIRECT", display=display.data_window)
+plot(walcl,  "EXPORT_FED_TOTAL_ASSETS_WALCL", display=display.data_window)
+plot(float(walclChangeTime), "EXPORT_WALCL_OBS_CHANGE_TIME", display=display.data_window)
+
+plot(brent, "EXPORT_BRENT_PROXY", display=display.data_window)
+plot(gvz,   "EXPORT_GVZ", display=display.data_window)
+plot(vix,   "EXPORT_VIX", display=display.data_window)
+plot(spx,   "EXPORT_SPX", display=display.data_window)
+plot(acwi,  "EXPORT_ACWI", display=display.data_window)
+
+plot(gldFlow,  "EXPORT_GLD_FUND_FLOWS", display=display.data_window)
+plot(gldAum,   "EXPORT_GLD_AUM", display=display.data_window)
+plot(iauFlow,  "EXPORT_IAU_FUND_FLOWS", display=display.data_window)
+plot(iauAum,   "EXPORT_IAU_AUM", display=display.data_window)
+plot(gldmFlow, "EXPORT_GLDM_FUND_FLOWS", display=display.data_window)
+plot(gldmAum,  "EXPORT_GLDM_AUM", display=display.data_window)
+plot(sgolFlow, "EXPORT_SGOL_FUND_FLOWS", display=display.data_window)
+plot(sgolAum,  "EXPORT_SGOL_AUM", display=display.data_window)
+
+plot(spyFlow, "EXPORT_SPY_FUND_FLOWS", display=display.data_window)
+plot(spyAum,  "EXPORT_SPY_AUM", display=display.data_window)
+plot(ivvFlow, "EXPORT_IVV_FUND_FLOWS", display=display.data_window)
+plot(ivvAum,  "EXPORT_IVV_AUM", display=display.data_window)
+plot(aggFlow, "EXPORT_AGG_FUND_FLOWS", display=display.data_window)
+plot(aggAum,  "EXPORT_AGG_AUM", display=display.data_window)
+plot(bndFlow, "EXPORT_BND_FUND_FLOWS", display=display.data_window)
+plot(bndAum,  "EXPORT_BND_AUM", display=display.data_window)
+
+plot(cotDisOI,      "EXPORT_COT_DISAGG_OI", display=display.data_window)
+plot(cotDisMMLong,  "EXPORT_COT_DISAGG_MM_LONG", display=display.data_window)
+plot(cotDisMMShort, "EXPORT_COT_DISAGG_MM_SHORT", display=display.data_window)
+plot(cotLegOI,      "EXPORT_COT_LEGACY_OI", display=display.data_window)
+plot(cotLegNCLong,  "EXPORT_COT_LEGACY_NC_LONG", display=display.data_window)
+plot(cotLegNCShort, "EXPORT_COT_LEGACY_NC_SHORT", display=display.data_window)
+
+plot(dmfxLog,                "EXPORT_DERIVED_DMFX_LOG_LEVEL", display=display.data_window)
+plot(emfxLog,                "EXPORT_DERIVED_EMFX_LOG_LEVEL", display=display.data_window)
+plot(realYieldConstructed,   "EXPORT_DERIVED_REAL_YIELD_10Y", display=display.data_window)
+plot(xauLogRet1D,            "EXPORT_DERIVED_XAU_LOGRET_1D", display=display.data_window)
+plot(goldEtfFlowRaw,         "EXPORT_DERIVED_GOLD_ETF_FLOW_RAW_SUM", display=display.data_window)
+plot(equityMinusBondFlowRaw, "EXPORT_DERIVED_EQUITY_MINUS_BOND_FLOW_RAW", display=display.data_window)
+plot(cotDisNetOI,            "EXPORT_DERIVED_COT_DISAGG_MM_NET_OI", display=display.data_window)
+plot(cotLegNetOI,            "EXPORT_DERIVED_COT_LEGACY_NC_NET_OI", display=display.data_window)
+
+// Slow-series observed change timestamps. These are audit fields, not official
+// release timestamps. They identify when the chart first observes a new value.
+plot(float(gldChangeTime),    "EXPORT_GLD_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(iauChangeTime),    "EXPORT_IAU_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(gldmChangeTime),   "EXPORT_GLDM_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(sgolChangeTime),   "EXPORT_SGOL_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(spyChangeTime),    "EXPORT_SPY_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(ivvChangeTime),    "EXPORT_IVV_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(aggChangeTime),    "EXPORT_AGG_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(bndChangeTime),    "EXPORT_BND_FLOW_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(cotDisChangeTime), "EXPORT_COT_DISAGG_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(cotLegChangeTime), "EXPORT_COT_LEGACY_OBS_CHANGE_TIME", display=display.data_window)
+
+// 60 plot outputs total, below Pine's 64 plot-count limit.
+
+// ------------------------------ Status table ----------------------------------
+var table status = table.new(position.top_right, 2, 9, border_width=1)
+if barstate.islast
+    float chartMinutes = timeframe.in_seconds() / 60.0
+    bool dailyOK = math.abs(chartMinutes - 1440.0) < 0.01
+    table.cell(status, 0, 0, "Gold FAST Export")
+    table.cell(status, 1, 0, "Raw surface")
+    table.cell(status, 0, 1, "Chart TF")
+    table.cell(status, 1, 1, dailyOK ? "1D OK" : "USE 1D")
+    table.cell(status, 0, 2, "Requests")
+    table.cell(status, 1, 2, "38 / 40")
+    table.cell(status, 0, 3, "Plots")
+    table.cell(status, 1, 3, "60 / 64")
+    table.cell(status, 0, 4, "XAU")
+    table.cell(status, 1, 4, na(xauC) ? "MISSING" : "OK")
+    table.cell(status, 0, 5, "ETF flows")
+    table.cell(status, 1, 5, na(gldFlow) and na(iauFlow) ? "CHECK" : "OK")
+    table.cell(status, 0, 6, "COT disagg")
+    table.cell(status, 1, 6, na(cotDisOI) ? "MISSING" : "OK")
+    table.cell(status, 0, 7, "COT legacy")
+    table.cell(status, 1, 7, na(cotLegOI) ? "MISSING" : "OK")
+    table.cell(status, 0, 8, "Export")
+    table.cell(status, 1, 8, "Chart data CSV")
