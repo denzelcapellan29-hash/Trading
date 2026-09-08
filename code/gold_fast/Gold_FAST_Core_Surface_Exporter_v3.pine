@@ -8,33 +8,35 @@ indicator("Gold FAST Core Surface Exporter v3", shorttitle="Gold FAST Core v3",
 //   - 1W chart: native weekly primary/secondary FAST panel
 //
 // v3 intentionally removes observed-change ta.valuewhen() logic and dynamic
-// Corrected ACWI exchange: NASDAQ:ACWI (not AMEX:ACWI).
+// Corrected ACWI exchange: NASDAQ:ACWI (not NASDAQ:ACWI).
 // helper requests from v2. Python can infer value-change dates from the raw
 // exported series. The goal here is a minimal, hard-to-break raw data surface.
 //
 // IMPORTANT
 // XAUUSD uses the CHART'S own OHLC. Keep the chart on OANDA:XAUUSD.
+// External ticker inputs are strings, not input.symbol(), so an unavailable ticker
+// can return na through ignore_invalid_symbol=true instead of aborting the script.
 
 string GROUP_FX = "FX / USD opportunity cost"
-string gcSymbol      = input.symbol("COMEX:GC1!", "COMEX Gold continuous", group=GROUP_FX)
-string eurusdSymbol  = input.symbol("OANDA:EURUSD", "EURUSD", group=GROUP_FX)
-string usdjpySymbol  = input.symbol("OANDA:USDJPY", "USDJPY", group=GROUP_FX)
-string usdcnySymbol  = input.symbol("FX_IDC:USDCNY", "USDCNY", group=GROUP_FX)
-string audusdSymbol  = input.symbol("OANDA:AUDUSD", "AUDUSD", group=GROUP_FX)
-string dxySymbol     = input.symbol("TVC:DXY", "DXY", group=GROUP_FX)
+string gcSymbol      = input.string("COMEX:GC1!", "COMEX Gold continuous", group=GROUP_FX)
+string eurusdSymbol  = input.string("OANDA:EURUSD", "EURUSD", group=GROUP_FX)
+string usdjpySymbol  = input.string("OANDA:USDJPY", "USDJPY", group=GROUP_FX)
+string usdcnySymbol  = input.string("FX_IDC:USDCNY", "USDCNY", group=GROUP_FX)
+string audusdSymbol  = input.string("OANDA:AUDUSD", "AUDUSD", group=GROUP_FX)
+string dxySymbol     = input.string("TVC:DXY", "DXY", group=GROUP_FX)
 
 string GROUP_MACRO = "Rates / inflation / liquidity"
-string dgs10Symbol   = input.symbol("FRED:DGS10", "US 10Y nominal yield", group=GROUP_MACRO)
-string t10yieSymbol  = input.symbol("FRED:T10YIE", "US 10Y breakeven", group=GROUP_MACRO)
-string dfii10Symbol  = input.symbol("FRED:DFII10", "US 10Y real yield", group=GROUP_MACRO)
-string walclSymbol   = input.symbol("FRED:WALCL", "Federal Reserve total assets", group=GROUP_MACRO)
+string dgs10Symbol   = input.string("FRED:DGS10", "US 10Y nominal yield", group=GROUP_MACRO)
+string t10yieSymbol  = input.string("FRED:T10YIE", "US 10Y breakeven", group=GROUP_MACRO)
+string dfii10Symbol  = input.string("FRED:DFII10", "US 10Y real yield", group=GROUP_MACRO)
+string walclSymbol   = input.string("FRED:WALCL", "Federal Reserve total assets", group=GROUP_MACRO)
 
 string GROUP_RISK = "Risk / geopolitics / competing assets"
-string brentSymbol   = input.symbol("TVC:UKOIL", "Brent proxy", group=GROUP_RISK)
-string gvzSymbol     = input.symbol("CBOE:GVZ", "Gold ETF volatility index", group=GROUP_RISK)
-string vixSymbol     = input.symbol("CBOE:VIX", "VIX", group=GROUP_RISK)
-string spxSymbol     = input.symbol("SP:SPX", "S&P 500", group=GROUP_RISK)
-string acwiSymbol    = input.symbol("NASDAQ:ACWI", "MSCI ACWI ETF proxy", group=GROUP_RISK)
+string brentSymbol   = input.string("TVC:UKOIL", "Brent proxy", group=GROUP_RISK)
+string gvzSymbol     = input.string("CBOE:GVZ", "Gold ETF volatility index", group=GROUP_RISK)
+string vixSymbol     = input.string("CBOE:VIX", "VIX", group=GROUP_RISK)
+string spxSymbol     = input.string("SP:SPX", "S&P 500", group=GROUP_RISK)
+string acwiSymbol    = input.string("NASDAQ:ACWI", "MSCI ACWI ETF proxy", group=GROUP_RISK)
 
 float gcC = request.security(gcSymbol, timeframe.period, close,
      gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off, ignore_invalid_symbol=true)
