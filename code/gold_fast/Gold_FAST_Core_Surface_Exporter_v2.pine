@@ -1,0 +1,142 @@
+//@version=6
+indicator("Gold FAST Core Surface Exporter v2", shorttitle="Gold FAST Core v2",
+     overlay=false, dynamic_requests=true, max_bars_back=5000)
+
+// Run this SAME script twice:
+//   1) OANDA:XAUUSD, 1D chart  -> daily stability/research surface
+//   2) OANDA:XAUUSD, 1W chart  -> native weekly primary-FAST surface
+//
+// The requested timeframe follows the chart timeframe, so the weekly export is
+// genuinely weekly rather than a resample performed after the fact.
+//
+// Keep Python responsible for transformations, lag rules, integration-order
+// testing, cointegration specification search, and rolling FAST estimation.
+
+string GROUP_TARGET = "Target / Gold"
+string xauSymbol     = input.symbol("OANDA:XAUUSD", "Spot gold", group=GROUP_TARGET)
+string gcSymbol      = input.symbol("COMEX:GC1!", "COMEX Gold continuous", group=GROUP_TARGET)
+
+string GROUP_FX = "FX / USD opportunity cost"
+string eurusdSymbol  = input.symbol("OANDA:EURUSD", "EURUSD", group=GROUP_FX)
+string usdjpySymbol  = input.symbol("OANDA:USDJPY", "USDJPY", group=GROUP_FX)
+string usdcnySymbol  = input.symbol("FX_IDC:USDCNY", "USDCNY", group=GROUP_FX)
+string audusdSymbol  = input.symbol("OANDA:AUDUSD", "AUDUSD", group=GROUP_FX)
+string dxySymbol     = input.symbol("TVC:DXY", "DXY", group=GROUP_FX)
+
+string GROUP_RATES = "Rates / inflation / liquidity"
+string dgs10Symbol   = input.symbol("FRED:DGS10", "US 10Y nominal yield", group=GROUP_RATES)
+string t10yieSymbol  = input.symbol("FRED:T10YIE", "US 10Y breakeven", group=GROUP_RATES)
+string dfii10Symbol  = input.symbol("FRED:DFII10", "US 10Y real yield", group=GROUP_RATES)
+string walclSymbol   = input.symbol("FRED:WALCL", "Federal Reserve total assets", group=GROUP_RATES)
+
+string GROUP_RISK = "Risk / geopolitics / competing assets"
+string brentSymbol   = input.symbol("TVC:UKOIL", "Brent proxy", group=GROUP_RISK)
+string gvzSymbol     = input.symbol("CBOE:GVZ", "Gold ETF volatility index", group=GROUP_RISK)
+string vixSymbol     = input.symbol("CBOE:VIX", "VIX", group=GROUP_RISK)
+string spxSymbol     = input.symbol("SP:SPX", "S&P 500", group=GROUP_RISK)
+string acwiSymbol    = input.symbol("AMEX:ACWI", "MSCI ACWI ETF proxy", group=GROUP_RISK)
+
+f_close(string symbol) =>
+    request.security(symbol, timeframe.period, close,
+        gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+        ignore_invalid_symbol=true)
+
+f_ohlc(string symbol) =>
+    request.security(symbol, timeframe.period, [open, high, low, close],
+        gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+        ignore_invalid_symbol=true)
+
+f_obs_change_time(float s) =>
+    bool changed = not na(s) and (na(s[1]) or s != s[1])
+    ta.valuewhen(changed, time, 0)
+
+[xauO, xauH, xauL, xauC] = f_ohlc(xauSymbol)
+float gcC    = f_close(gcSymbol)
+float eurusd = f_close(eurusdSymbol)
+float usdjpy = f_close(usdjpySymbol)
+float usdcny = f_close(usdcnySymbol)
+float audusd = f_close(audusdSymbol)
+float dxy    = f_close(dxySymbol)
+float dgs10  = f_close(dgs10Symbol)
+float t10yie = f_close(t10yieSymbol)
+float dfii10 = f_close(dfii10Symbol)
+float walcl  = f_close(walclSymbol)
+float brent  = f_close(brentSymbol)
+float gvz    = f_close(gvzSymbol)
+float vix    = f_close(vixSymbol)
+float spx    = f_close(spxSymbol)
+float acwi   = f_close(acwiSymbol)
+
+float dmfxLog = not na(eurusd) and eurusd > 0 and not na(usdjpy) and usdjpy > 0 ?
+     0.5 * (-math.log(eurusd) + math.log(usdjpy)) : na
+float emfxLog = not na(usdcny) and usdcny > 0 and not na(audusd) and audusd > 0 ?
+     0.5 * (math.log(usdcny) - math.log(audusd)) : na
+float realYieldConstructed = not na(dgs10) and not na(t10yie) ? dgs10 - t10yie : na
+float xauLogRet1 = not na(xauC) and xauC > 0 and not na(xauC[1]) and xauC[1] > 0 ?
+     math.log(xauC / xauC[1]) : na
+
+plot(xauO, "EXPORT_XAUUSD_O", display=display.data_window)
+plot(xauH, "EXPORT_XAUUSD_H", display=display.data_window)
+plot(xauL, "EXPORT_XAUUSD_L", display=display.data_window)
+plot(xauC, "EXPORT_XAUUSD_C", display=display.data_window)
+plot(gcC, "EXPORT_GC1_CLOSE", display=display.data_window)
+
+plot(eurusd, "EXPORT_EURUSD", display=display.data_window)
+plot(usdjpy, "EXPORT_USDJPY", display=display.data_window)
+plot(usdcny, "EXPORT_USDCNY", display=display.data_window)
+plot(audusd, "EXPORT_AUDUSD", display=display.data_window)
+plot(dxy, "EXPORT_DXY", display=display.data_window)
+
+plot(dgs10, "EXPORT_US10Y_NOMINAL", display=display.data_window)
+plot(t10yie, "EXPORT_US10Y_BREAKEVEN", display=display.data_window)
+plot(dfii10, "EXPORT_US10Y_REAL_DIRECT", display=display.data_window)
+plot(walcl, "EXPORT_FED_TOTAL_ASSETS_WALCL", display=display.data_window)
+
+plot(brent, "EXPORT_BRENT_PROXY", display=display.data_window)
+plot(gvz, "EXPORT_GVZ", display=display.data_window)
+plot(vix, "EXPORT_VIX", display=display.data_window)
+plot(spx, "EXPORT_SPX", display=display.data_window)
+plot(acwi, "EXPORT_ACWI", display=display.data_window)
+
+plot(dmfxLog, "EXPORT_DERIVED_DMFX_LOG_LEVEL", display=display.data_window)
+plot(emfxLog, "EXPORT_DERIVED_EMFX_LOG_LEVEL", display=display.data_window)
+plot(realYieldConstructed, "EXPORT_DERIVED_REAL_YIELD_10Y", display=display.data_window)
+plot(xauLogRet1, "EXPORT_DERIVED_XAU_LOGRET_1BAR", display=display.data_window)
+
+plot(float(f_obs_change_time(gcC)), "EXPORT_GC1_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(eurusd)), "EXPORT_EURUSD_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(usdjpy)), "EXPORT_USDJPY_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(usdcny)), "EXPORT_USDCNY_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(audusd)), "EXPORT_AUDUSD_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(dxy)), "EXPORT_DXY_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(dgs10)), "EXPORT_US10Y_NOMINAL_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(t10yie)), "EXPORT_US10Y_BREAKEVEN_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(dfii10)), "EXPORT_US10Y_REAL_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(walcl)), "EXPORT_WALCL_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(brent)), "EXPORT_BRENT_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(gvz)), "EXPORT_GVZ_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(vix)), "EXPORT_VIX_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(spx)), "EXPORT_SPX_OBS_CHANGE_TIME", display=display.data_window)
+plot(float(f_obs_change_time(acwi)), "EXPORT_ACWI_OBS_CHANGE_TIME", display=display.data_window)
+
+plot(float(time_close), "EXPORT_BAR_END_TIME", display=display.data_window)
+plot(barstate.isconfirmed ? 1.0 : 0.0, "EXPORT_BAR_CONFIRMED", display=display.data_window)
+plot(timeframe.isweekly ? 1.0 : 0.0, "EXPORT_SURFACE_IS_WEEKLY", display=display.data_window)
+
+var table status = table.new(position.top_right, 2, 7, border_width=1)
+if barstate.islast
+    bool tfOK = timeframe.isdaily or timeframe.isweekly
+    table.cell(status, 0, 0, "Gold FAST Core v2")
+    table.cell(status, 1, 0, timeframe.period)
+    table.cell(status, 0, 1, "Allowed TF")
+    table.cell(status, 1, 1, tfOK ? "OK" : "USE 1D OR 1W")
+    table.cell(status, 0, 2, "Requests")
+    table.cell(status, 1, 2, "16 / 40")
+    table.cell(status, 0, 3, "XAU")
+    table.cell(status, 1, 3, na(xauC) ? "MISSING" : "OK")
+    table.cell(status, 0, 4, "Rates")
+    table.cell(status, 1, 4, na(dgs10) and na(dfii10) ? "CHECK" : "OK")
+    table.cell(status, 0, 5, "FX")
+    table.cell(status, 1, 5, na(eurusd) and na(usdjpy) ? "CHECK" : "OK")
+    table.cell(status, 0, 6, "Export")
+    table.cell(status, 1, 6, "Chart data CSV")
