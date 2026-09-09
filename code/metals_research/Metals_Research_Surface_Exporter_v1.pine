@@ -1,0 +1,291 @@
+//@version=6
+indicator("Metals Research Surface Exporter v1", shorttitle="Metals Surface v1",
+     overlay=false, max_bars_back=10000)
+
+// Run this SAME script twice on any liquid chart (recommended OANDA:XAUUSD):
+//   1) 1D -> daily research / timing / volatility surface
+//   2) 1W -> native weekly TSMOM / PCA / cross-sectional surface
+//
+// External symbols are plain strings. If a TradingView feed is unavailable,
+// request.security(..., ignore_invalid_symbol=true) returns na instead of
+// killing the whole exporter.
+//
+// Broad purpose:
+// - Gold anchor + Silver / Platinum / Palladium / Copper
+// - broader industrial-metal PCA universe (Aluminium / Nickel / Zinc / Lead / Tin)
+// - futures volume for liquidity diagnostics
+// - precious/base-metal basket proxies for relative-strength work
+// - common macro context for later fair-value/state research
+
+string G_PREC = "Precious / core tradeable metals"
+string xauSymbol = input.string("OANDA:XAUUSD", "Gold spot", group=G_PREC)
+string xagSymbol = input.string("OANDA:XAGUSD", "Silver spot", group=G_PREC)
+string xptSymbol = input.string("OANDA:XPTUSD", "Platinum spot", group=G_PREC)
+string xpdSymbol = input.string("OANDA:XPDUSD", "Palladium spot", group=G_PREC)
+
+string G_FUT = "US metal futures"
+string gcSymbol = input.string("COMEX:GC1!", "Gold futures", group=G_FUT)
+string siSymbol = input.string("COMEX:SI1!", "Silver futures", group=G_FUT)
+string plSymbol = input.string("NYMEX:PL1!", "Platinum futures", group=G_FUT)
+string paSymbol = input.string("NYMEX:PA1!", "Palladium futures", group=G_FUT)
+string hgSymbol = input.string("COMEX:HG1!", "Copper futures", group=G_FUT)
+
+string G_LME = "LME industrial metals"
+string ahSymbol = input.string("LME:AH1!", "Aluminium high grade", group=G_LME)
+string niSymbol = input.string("LME:NI1!", "Nickel", group=G_LME)
+string zsSymbol = input.string("LME:ZS1!", "Zinc special high grade", group=G_LME)
+string pbSymbol = input.string("LME:PB1!", "Lead", group=G_LME)
+string snSymbol = input.string("LME:SN1!", "Tin", group=G_LME)
+
+string G_INDEX = "Metals basket / index proxies"
+string dbpSymbol  = input.string("AMEX:DBP", "DBP precious-metals basket", group=G_INDEX)
+string dbbSymbol  = input.string("AMEX:DBB", "DBB base-metals basket", group=G_INDEX)
+string gltrSymbol = input.string("AMEX:GLTR", "GLTR precious-metals basket", group=G_INDEX)
+
+string G_MACRO = "Macro context"
+string dxySymbol   = input.string("TVC:DXY", "DXY", group=G_MACRO)
+string real10Symbol= input.string("FRED:DFII10", "US 10Y real yield", group=G_MACRO)
+string nom10Symbol = input.string("FRED:DGS10", "US 10Y nominal yield", group=G_MACRO)
+string be10Symbol  = input.string("FRED:T10YIE", "US 10Y breakeven", group=G_MACRO)
+string walclSymbol = input.string("FRED:WALCL", "Fed total assets", group=G_MACRO)
+string vixSymbol   = input.string("CBOE:VIX", "VIX", group=G_MACRO)
+string spxSymbol   = input.string("SP:SPX", "S&P 500", group=G_MACRO)
+string acwiSymbol  = input.string("NASDAQ:ACWI", "MSCI ACWI ETF", group=G_MACRO)
+string brentSymbol = input.string("TVC:UKOIL", "Brent proxy", group=G_MACRO)
+
+[xauO, xauH, xauL, xauC] = request.security(
+    xauSymbol, timeframe.period, [open, high, low, close],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[xagO, xagH, xagL, xagC] = request.security(
+    xagSymbol, timeframe.period, [open, high, low, close],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[xptO, xptH, xptL, xptC] = request.security(
+    xptSymbol, timeframe.period, [open, high, low, close],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[xpdO, xpdH, xpdL, xpdC] = request.security(
+    xpdSymbol, timeframe.period, [open, high, low, close],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[gcC, gcV] = request.security(
+    gcSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[siC, siV] = request.security(
+    siSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[plC, plV] = request.security(
+    plSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[paC, paV] = request.security(
+    paSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[hgO, hgH, hgL, hgC, hgV] = request.security(
+    hgSymbol, timeframe.period, [open, high, low, close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[ahC, ahV] = request.security(
+    ahSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[niC, niV] = request.security(
+    niSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[zsC, zsV] = request.security(
+    zsSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[pbC, pbV] = request.security(
+    pbSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+[snC, snV] = request.security(
+    snSymbol, timeframe.period, [close, volume],
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+dbpC = request.security(
+    dbpSymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+dbbC = request.security(
+    dbbSymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+gltrC = request.security(
+    gltrSymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+dxyC = request.security(dxySymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+real10 = request.security(real10Symbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+nom10 = request.security(nom10Symbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+be10 = request.security(be10Symbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+walcl = request.security(walclSymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+vixC = request.security(vixSymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+spxC = request.security(spxSymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+acwiC = request.security(acwiSymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+brentC = request.security(brentSymbol, timeframe.period, close,
+    gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off,
+    ignore_invalid_symbol=true)
+
+plot(xauO, "EXPORT_XAUUSD_O", display=display.data_window)
+plot(xauH, "EXPORT_XAUUSD_H", display=display.data_window)
+plot(xauL, "EXPORT_XAUUSD_L", display=display.data_window)
+plot(xauC, "EXPORT_XAUUSD_C", display=display.data_window)
+
+plot(xagO, "EXPORT_XAGUSD_O", display=display.data_window)
+plot(xagH, "EXPORT_XAGUSD_H", display=display.data_window)
+plot(xagL, "EXPORT_XAGUSD_L", display=display.data_window)
+plot(xagC, "EXPORT_XAGUSD_C", display=display.data_window)
+
+plot(xptO, "EXPORT_XPTUSD_O", display=display.data_window)
+plot(xptH, "EXPORT_XPTUSD_H", display=display.data_window)
+plot(xptL, "EXPORT_XPTUSD_L", display=display.data_window)
+plot(xptC, "EXPORT_XPTUSD_C", display=display.data_window)
+
+plot(xpdO, "EXPORT_XPDUSD_O", display=display.data_window)
+plot(xpdH, "EXPORT_XPDUSD_H", display=display.data_window)
+plot(xpdL, "EXPORT_XPDUSD_L", display=display.data_window)
+plot(xpdC, "EXPORT_XPDUSD_C", display=display.data_window)
+
+plot(gcC, "EXPORT_GC1_CLOSE", display=display.data_window)
+plot(gcV, "EXPORT_GC1_VOLUME", display=display.data_window)
+plot(siC, "EXPORT_SI1_CLOSE", display=display.data_window)
+plot(siV, "EXPORT_SI1_VOLUME", display=display.data_window)
+plot(plC, "EXPORT_PL1_CLOSE", display=display.data_window)
+plot(plV, "EXPORT_PL1_VOLUME", display=display.data_window)
+plot(paC, "EXPORT_PA1_CLOSE", display=display.data_window)
+plot(paV, "EXPORT_PA1_VOLUME", display=display.data_window)
+
+plot(hgO, "EXPORT_HG1_O", display=display.data_window)
+plot(hgH, "EXPORT_HG1_H", display=display.data_window)
+plot(hgL, "EXPORT_HG1_L", display=display.data_window)
+plot(hgC, "EXPORT_HG1_C", display=display.data_window)
+plot(hgV, "EXPORT_HG1_VOLUME", display=display.data_window)
+
+plot(ahC, "EXPORT_AH1_CLOSE", display=display.data_window)
+plot(ahV, "EXPORT_AH1_VOLUME", display=display.data_window)
+plot(niC, "EXPORT_NI1_CLOSE", display=display.data_window)
+plot(niV, "EXPORT_NI1_VOLUME", display=display.data_window)
+plot(zsC, "EXPORT_ZS1_CLOSE", display=display.data_window)
+plot(zsV, "EXPORT_ZS1_VOLUME", display=display.data_window)
+plot(pbC, "EXPORT_PB1_CLOSE", display=display.data_window)
+plot(pbV, "EXPORT_PB1_VOLUME", display=display.data_window)
+plot(snC, "EXPORT_SN1_CLOSE", display=display.data_window)
+plot(snV, "EXPORT_SN1_VOLUME", display=display.data_window)
+
+plot(dbpC, "EXPORT_DBP_CLOSE", display=display.data_window)
+plot(dbbC, "EXPORT_DBB_CLOSE", display=display.data_window)
+plot(gltrC, "EXPORT_GLTR_CLOSE", display=display.data_window)
+
+plot(dxyC, "EXPORT_DXY", display=display.data_window)
+plot(real10, "EXPORT_US10Y_REAL", display=display.data_window)
+plot(nom10, "EXPORT_US10Y_NOMINAL", display=display.data_window)
+plot(be10, "EXPORT_US10Y_BREAKEVEN", display=display.data_window)
+plot(walcl, "EXPORT_WALCL", display=display.data_window)
+plot(vixC, "EXPORT_VIX", display=display.data_window)
+plot(spxC, "EXPORT_SPX", display=display.data_window)
+plot(acwiC, "EXPORT_ACWI", display=display.data_window)
+plot(brentC, "EXPORT_BRENT", display=display.data_window)
+
+plot(not na(xauC) and xauC > 0 and not na(xagC) ? xagC / xauC : na,
+    "EXPORT_DERIVED_XAG_OVER_XAU", display=display.data_window)
+plot(not na(xauC) and xauC > 0 and not na(xptC) ? xptC / xauC : na,
+    "EXPORT_DERIVED_XPT_OVER_XAU", display=display.data_window)
+plot(not na(xauC) and xauC > 0 and not na(xpdC) ? xpdC / xauC : na,
+    "EXPORT_DERIVED_XPD_OVER_XAU", display=display.data_window)
+plot(not na(dbpC) and dbpC > 0 and not na(dbbC) ? dbbC / dbpC : na,
+    "EXPORT_DERIVED_BASE_OVER_PRECIOUS_BASKET", display=display.data_window)
+
+plot(float(time_close), "EXPORT_BAR_END_TIME", display=display.data_window)
+plot(barstate.isconfirmed ? 1.0 : 0.0, "EXPORT_BAR_CONFIRMED", display=display.data_window)
+plot(timeframe.isdaily ? 1.0 : 0.0, "EXPORT_SURFACE_IS_DAILY", display=display.data_window)
+plot(timeframe.isweekly ? 1.0 : 0.0, "EXPORT_SURFACE_IS_WEEKLY", display=display.data_window)
+
+var table status = table.new(position.top_right, 3, 12, border_width=1)
+if barstate.islast
+    table.cell(status, 0, 0, "Metals Surface v1")
+    table.cell(status, 1, 0, timeframe.period)
+    table.cell(status, 2, 0, "26 / 40 req")
+
+    table.cell(status, 0, 1, "XAU spot")
+    table.cell(status, 1, 1, xauSymbol)
+    table.cell(status, 2, 1, na(xauC) ? "NA" : "OK")
+
+    table.cell(status, 0, 2, "XAG spot")
+    table.cell(status, 1, 2, xagSymbol)
+    table.cell(status, 2, 2, na(xagC) ? "NA" : "OK")
+
+    table.cell(status, 0, 3, "XPT spot")
+    table.cell(status, 1, 3, xptSymbol)
+    table.cell(status, 2, 3, na(xptC) ? "NA" : "OK")
+
+    table.cell(status, 0, 4, "XPD spot")
+    table.cell(status, 1, 4, xpdSymbol)
+    table.cell(status, 2, 4, na(xpdC) ? "NA" : "OK")
+
+    table.cell(status, 0, 5, "Copper")
+    table.cell(status, 1, 5, hgSymbol)
+    table.cell(status, 2, 5, na(hgC) ? "NA" : "OK")
+
+    table.cell(status, 0, 6, "LME Al")
+    table.cell(status, 1, 6, ahSymbol)
+    table.cell(status, 2, 6, na(ahC) ? "NA" : "OK")
+
+    table.cell(status, 0, 7, "LME Ni")
+    table.cell(status, 1, 7, niSymbol)
+    table.cell(status, 2, 7, na(niC) ? "NA" : "OK")
+
+    table.cell(status, 0, 8, "LME Zn")
+    table.cell(status, 1, 8, zsSymbol)
+    table.cell(status, 2, 8, na(zsC) ? "NA" : "OK")
+
+    table.cell(status, 0, 9, "Precious basket")
+    table.cell(status, 1, 9, dbpSymbol)
+    table.cell(status, 2, 9, na(dbpC) ? "NA" : "OK")
+
+    table.cell(status, 0, 10, "Base basket")
+    table.cell(status, 1, 10, dbbSymbol)
+    table.cell(status, 2, 10, na(dbbC) ? "NA" : "OK")
+
+    table.cell(status, 0, 11, "Use")
+    table.cell(status, 1, 11, "1D + 1W")
+    table.cell(status, 2, 11, "Export CSV")
