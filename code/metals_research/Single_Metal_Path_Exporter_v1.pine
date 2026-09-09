@@ -1,0 +1,45 @@
+//@version=6
+indicator("Single Metal Path Exporter v1", shorttitle="Metal Path v1",
+     overlay=false, max_bars_back=10000)
+
+// Generic chart-native exporter for later liquidity / node / path research.
+// Put this on the metal/futures chart you actually want to study.
+//
+// Suggested charts:
+// OANDA:XAGUSD
+// OANDA:XPTUSD
+// OANDA:XPDUSD
+// COMEX:HG1!
+// COMEX:SI1!
+// NYMEX:PL1!
+// NYMEX:PA1!
+// LME:AH1!
+// LME:NI1!
+// LME:ZS1!
+// LME:PB1!
+// LME:SN1!
+//
+// Use 1D/1W now if desired. For lower-timeframe pathing later, run on the
+// chosen 2H/4H/etc timeframe and export maximum history available.
+
+plot(open, "EXPORT_PATH_O", display=display.data_window)
+plot(high, "EXPORT_PATH_H", display=display.data_window)
+plot(low, "EXPORT_PATH_L", display=display.data_window)
+plot(close, "EXPORT_PATH_C", display=display.data_window)
+plot(volume, "EXPORT_PATH_VOLUME", display=display.data_window)
+plot(float(time), "EXPORT_PATH_BAR_START_TIME", display=display.data_window)
+plot(float(time_close), "EXPORT_PATH_BAR_END_TIME", display=display.data_window)
+plot(barstate.isconfirmed ? 1.0 : 0.0, "EXPORT_PATH_BAR_CONFIRMED", display=display.data_window)
+
+var table status = table.new(position.top_right, 2, 5, border_width=1)
+if barstate.islast
+    table.cell(status, 0, 0, "Metal Path v1")
+    table.cell(status, 1, 0, syminfo.tickerid)
+    table.cell(status, 0, 1, "Timeframe")
+    table.cell(status, 1, 1, timeframe.period)
+    table.cell(status, 0, 2, "Close")
+    table.cell(status, 1, 2, na(close) ? "NA" : "OK")
+    table.cell(status, 0, 3, "Volume")
+    table.cell(status, 1, 3, na(volume) ? "NA" : "OK")
+    table.cell(status, 0, 4, "Export")
+    table.cell(status, 1, 4, "Chart data CSV")
