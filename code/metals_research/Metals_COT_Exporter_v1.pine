@@ -1,0 +1,198 @@
+//@version=6
+indicator("Metals COT Exporter v1", shorttitle="Metals COT v1",
+     overlay=false, dynamic_requests=true, max_bars_back=10000)
+
+import TradingView/LibraryCOT/6 as cot
+
+// Run on 1W. Futures-only by default.
+// Direct CFTC contract-market codes avoid automatic symbol-code discovery.
+//
+// Gold      088691
+// Silver    084691
+// Copper #1 085692
+// Platinum  076651
+// Palladium 075651
+//
+// If one metal produces a LibraryCOT runtime error, turn that metal OFF in
+// settings and export the other four. Send the exact TradingView error text.
+
+string G = "COT settings"
+bool includeOptions = input.bool(false, "Include options", group=G)
+bool useGold      = input.bool(true, "Gold", group=G)
+bool useSilver    = input.bool(true, "Silver", group=G)
+bool useCopper    = input.bool(true, "Copper", group=G)
+bool usePlatinum  = input.bool(true, "Platinum", group=G)
+bool usePalladium = input.bool(true, "Palladium", group=G)
+
+float gDOI = useGold ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="088691", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float gDL = useGold ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="088691", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Long", metricType="All") : na
+float gDS = useGold ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="088691", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Short", metricType="All") : na
+float gLOI = useGold ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="088691", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float gLL = useGold ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="088691", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Long", metricType="All") : na
+float gLS = useGold ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="088691", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Short", metricType="All") : na
+
+float sDOI = useSilver ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="084691", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float sDL = useSilver ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="084691", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Long", metricType="All") : na
+float sDS = useSilver ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="084691", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Short", metricType="All") : na
+float sLOI = useSilver ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="084691", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float sLL = useSilver ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="084691", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Long", metricType="All") : na
+float sLS = useSilver ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="084691", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Short", metricType="All") : na
+
+float cDOI = useCopper ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="085692", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float cDL = useCopper ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="085692", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Long", metricType="All") : na
+float cDS = useCopper ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="085692", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Short", metricType="All") : na
+float cLOI = useCopper ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="085692", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float cLL = useCopper ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="085692", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Long", metricType="All") : na
+float cLS = useCopper ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="085692", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Short", metricType="All") : na
+
+float ptDOI = usePlatinum ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="076651", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float ptDL = usePlatinum ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="076651", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Long", metricType="All") : na
+float ptDS = usePlatinum ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="076651", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Short", metricType="All") : na
+float ptLOI = usePlatinum ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="076651", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float ptLL = usePlatinum ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="076651", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Long", metricType="All") : na
+float ptLS = usePlatinum ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="076651", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Short", metricType="All") : na
+
+float pdDOI = usePalladium ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="075651", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float pdDL = usePalladium ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="075651", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Long", metricType="All") : na
+float pdDS = usePalladium ? cot.requestCommitmentOfTraders(
+    COTType="Disaggregated", CFTCCode="075651", includeOptions=includeOptions,
+    metricName="Managed Money Positions", metricDirection="Short", metricType="All") : na
+float pdLOI = usePalladium ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="075651", includeOptions=includeOptions,
+    metricName="Open Interest", metricDirection="No direction", metricType="All") : na
+float pdLL = usePalladium ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="075651", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Long", metricType="All") : na
+float pdLS = usePalladium ? cot.requestCommitmentOfTraders(
+    COTType="Legacy", CFTCCode="075651", includeOptions=includeOptions,
+    metricName="Noncommercial Positions", metricDirection="Short", metricType="All") : na
+
+plot(gDOI, "EXPORT_COT_GOLD_DIS_OI", display=display.data_window)
+plot(gDL, "EXPORT_COT_GOLD_DIS_MM_LONG", display=display.data_window)
+plot(gDS, "EXPORT_COT_GOLD_DIS_MM_SHORT", display=display.data_window)
+plot(gLOI, "EXPORT_COT_GOLD_LEG_OI", display=display.data_window)
+plot(gLL, "EXPORT_COT_GOLD_LEG_NC_LONG", display=display.data_window)
+plot(gLS, "EXPORT_COT_GOLD_LEG_NC_SHORT", display=display.data_window)
+plot(not na(gDOI) and gDOI != 0 ? (gDL-gDS)/gDOI : na,
+    "EXPORT_COT_GOLD_DIS_MM_NET_OI", display=display.data_window)
+plot(not na(gLOI) and gLOI != 0 ? (gLL-gLS)/gLOI : na,
+    "EXPORT_COT_GOLD_LEG_NC_NET_OI", display=display.data_window)
+
+plot(sDOI, "EXPORT_COT_SILVER_DIS_OI", display=display.data_window)
+plot(sDL, "EXPORT_COT_SILVER_DIS_MM_LONG", display=display.data_window)
+plot(sDS, "EXPORT_COT_SILVER_DIS_MM_SHORT", display=display.data_window)
+plot(sLOI, "EXPORT_COT_SILVER_LEG_OI", display=display.data_window)
+plot(sLL, "EXPORT_COT_SILVER_LEG_NC_LONG", display=display.data_window)
+plot(sLS, "EXPORT_COT_SILVER_LEG_NC_SHORT", display=display.data_window)
+plot(not na(sDOI) and sDOI != 0 ? (sDL-sDS)/sDOI : na,
+    "EXPORT_COT_SILVER_DIS_MM_NET_OI", display=display.data_window)
+plot(not na(sLOI) and sLOI != 0 ? (sLL-sLS)/sLOI : na,
+    "EXPORT_COT_SILVER_LEG_NC_NET_OI", display=display.data_window)
+
+plot(cDOI, "EXPORT_COT_COPPER_DIS_OI", display=display.data_window)
+plot(cDL, "EXPORT_COT_COPPER_DIS_MM_LONG", display=display.data_window)
+plot(cDS, "EXPORT_COT_COPPER_DIS_MM_SHORT", display=display.data_window)
+plot(cLOI, "EXPORT_COT_COPPER_LEG_OI", display=display.data_window)
+plot(cLL, "EXPORT_COT_COPPER_LEG_NC_LONG", display=display.data_window)
+plot(cLS, "EXPORT_COT_COPPER_LEG_NC_SHORT", display=display.data_window)
+plot(not na(cDOI) and cDOI != 0 ? (cDL-cDS)/cDOI : na,
+    "EXPORT_COT_COPPER_DIS_MM_NET_OI", display=display.data_window)
+plot(not na(cLOI) and cLOI != 0 ? (cLL-cLS)/cLOI : na,
+    "EXPORT_COT_COPPER_LEG_NC_NET_OI", display=display.data_window)
+
+plot(ptDOI, "EXPORT_COT_PLATINUM_DIS_OI", display=display.data_window)
+plot(ptDL, "EXPORT_COT_PLATINUM_DIS_MM_LONG", display=display.data_window)
+plot(ptDS, "EXPORT_COT_PLATINUM_DIS_MM_SHORT", display=display.data_window)
+plot(ptLOI, "EXPORT_COT_PLATINUM_LEG_OI", display=display.data_window)
+plot(ptLL, "EXPORT_COT_PLATINUM_LEG_NC_LONG", display=display.data_window)
+plot(ptLS, "EXPORT_COT_PLATINUM_LEG_NC_SHORT", display=display.data_window)
+plot(not na(ptDOI) and ptDOI != 0 ? (ptDL-ptDS)/ptDOI : na,
+    "EXPORT_COT_PLATINUM_DIS_MM_NET_OI", display=display.data_window)
+plot(not na(ptLOI) and ptLOI != 0 ? (ptLL-ptLS)/ptLOI : na,
+    "EXPORT_COT_PLATINUM_LEG_NC_NET_OI", display=display.data_window)
+
+plot(pdDOI, "EXPORT_COT_PALLADIUM_DIS_OI", display=display.data_window)
+plot(pdDL, "EXPORT_COT_PALLADIUM_DIS_MM_LONG", display=display.data_window)
+plot(pdDS, "EXPORT_COT_PALLADIUM_DIS_MM_SHORT", display=display.data_window)
+plot(pdLOI, "EXPORT_COT_PALLADIUM_LEG_OI", display=display.data_window)
+plot(pdLL, "EXPORT_COT_PALLADIUM_LEG_NC_LONG", display=display.data_window)
+plot(pdLS, "EXPORT_COT_PALLADIUM_LEG_NC_SHORT", display=display.data_window)
+plot(not na(pdDOI) and pdDOI != 0 ? (pdDL-pdDS)/pdDOI : na,
+    "EXPORT_COT_PALLADIUM_DIS_MM_NET_OI", display=display.data_window)
+plot(not na(pdLOI) and pdLOI != 0 ? (pdLL-pdLS)/pdLOI : na,
+    "EXPORT_COT_PALLADIUM_LEG_NC_NET_OI", display=display.data_window)
+
+plot(float(time_close), "EXPORT_COT_BAR_END_TIME", display=display.data_window)
+plot(barstate.isconfirmed ? 1.0 : 0.0, "EXPORT_COT_BAR_CONFIRMED", display=display.data_window)
+
+var table status = table.new(position.top_right, 3, 7, border_width=1)
+if barstate.islast
+    table.cell(status, 0, 0, "Metals COT v1")
+    table.cell(status, 1, 0, timeframe.period)
+    table.cell(status, 2, 0, "30 / 40 req")
+
+    table.cell(status, 0, 1, "Gold 088691")
+    table.cell(status, 2, 1, not useGold ? "OFF" : na(gLOI) ? "NA" : "OK")
+    table.cell(status, 0, 2, "Silver 084691")
+    table.cell(status, 2, 2, not useSilver ? "OFF" : na(sLOI) ? "NA" : "OK")
+    table.cell(status, 0, 3, "Copper 085692")
+    table.cell(status, 2, 3, not useCopper ? "OFF" : na(cLOI) ? "NA" : "OK")
+    table.cell(status, 0, 4, "Platinum 076651")
+    table.cell(status, 2, 4, not usePlatinum ? "OFF" : na(ptLOI) ? "NA" : "OK")
+    table.cell(status, 0, 5, "Palladium 075651")
+    table.cell(status, 2, 5, not usePalladium ? "OFF" : na(pdLOI) ? "NA" : "OK")
+    table.cell(status, 0, 6, "Use")
+    table.cell(status, 1, 6, "1W")
+    table.cell(status, 2, 6, timeframe.isweekly ? "OK" : "USE 1W")
