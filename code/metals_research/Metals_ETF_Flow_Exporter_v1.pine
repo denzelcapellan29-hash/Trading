@@ -1,0 +1,116 @@
+//@version=6
+indicator("Metals ETF Flow Exporter v1", shorttitle="Metals ETF Flow v1",
+     overlay=false, max_bars_back=10000)
+
+// Run on 1D.
+// Daily FUND_FLOWS and AUM are exported separately so Python can build
+// causal weekly aggregates without forcing one arbitrary basket definition.
+//
+// GLD gold; SLV/SIVR silver; PPLT platinum; PALL palladium;
+// CPER copper; DBP precious basket; DBB base basket; GLTR precious basket.
+
+string G = "ETF symbols"
+string gld  = input.string("AMEX:GLD", "GLD", group=G)
+string slv  = input.string("AMEX:SLV", "SLV", group=G)
+string sivr = input.string("AMEX:SIVR", "SIVR", group=G)
+string pplt = input.string("AMEX:PPLT", "PPLT", group=G)
+string pall = input.string("AMEX:PALL", "PALL", group=G)
+string cper = input.string("AMEX:CPER", "CPER", group=G)
+string dbp  = input.string("AMEX:DBP", "DBP", group=G)
+string dbb  = input.string("AMEX:DBB", "DBB", group=G)
+string gltr = input.string("AMEX:GLTR", "GLTR", group=G)
+
+f_flow(string symbol) =>
+    request.financial(symbol, "FUND_FLOWS", "D",
+        gaps=barmerge.gaps_off, ignore_invalid_symbol=true)
+
+f_aum(string symbol) =>
+    request.financial(symbol, "AUM", "D",
+        gaps=barmerge.gaps_off, ignore_invalid_symbol=true)
+
+float gldF = f_flow(gld)
+float gldA = f_aum(gld)
+float slvF = f_flow(slv)
+float slvA = f_aum(slv)
+float sivrF = f_flow(sivr)
+float sivrA = f_aum(sivr)
+float ppltF = f_flow(pplt)
+float ppltA = f_aum(pplt)
+float pallF = f_flow(pall)
+float pallA = f_aum(pall)
+float cperF = f_flow(cper)
+float cperA = f_aum(cper)
+float dbpF = f_flow(dbp)
+float dbpA = f_aum(dbp)
+float dbbF = f_flow(dbb)
+float dbbA = f_aum(dbb)
+float gltrF = f_flow(gltr)
+float gltrA = f_aum(gltr)
+
+plot(gldF, "EXPORT_ETF_GLD_FLOW", display=display.data_window)
+plot(gldA, "EXPORT_ETF_GLD_AUM", display=display.data_window)
+plot(not na(gldA) and gldA != 0 ? gldF/gldA : na,
+    "EXPORT_ETF_GLD_FLOW_OVER_AUM", display=display.data_window)
+
+plot(slvF, "EXPORT_ETF_SLV_FLOW", display=display.data_window)
+plot(slvA, "EXPORT_ETF_SLV_AUM", display=display.data_window)
+plot(not na(slvA) and slvA != 0 ? slvF/slvA : na,
+    "EXPORT_ETF_SLV_FLOW_OVER_AUM", display=display.data_window)
+
+plot(sivrF, "EXPORT_ETF_SIVR_FLOW", display=display.data_window)
+plot(sivrA, "EXPORT_ETF_SIVR_AUM", display=display.data_window)
+plot(not na(sivrA) and sivrA != 0 ? sivrF/sivrA : na,
+    "EXPORT_ETF_SIVR_FLOW_OVER_AUM", display=display.data_window)
+
+plot(ppltF, "EXPORT_ETF_PPLT_FLOW", display=display.data_window)
+plot(ppltA, "EXPORT_ETF_PPLT_AUM", display=display.data_window)
+plot(not na(ppltA) and ppltA != 0 ? ppltF/ppltA : na,
+    "EXPORT_ETF_PPLT_FLOW_OVER_AUM", display=display.data_window)
+
+plot(pallF, "EXPORT_ETF_PALL_FLOW", display=display.data_window)
+plot(pallA, "EXPORT_ETF_PALL_AUM", display=display.data_window)
+plot(not na(pallA) and pallA != 0 ? pallF/pallA : na,
+    "EXPORT_ETF_PALL_FLOW_OVER_AUM", display=display.data_window)
+
+plot(cperF, "EXPORT_ETF_CPER_FLOW", display=display.data_window)
+plot(cperA, "EXPORT_ETF_CPER_AUM", display=display.data_window)
+plot(not na(cperA) and cperA != 0 ? cperF/cperA : na,
+    "EXPORT_ETF_CPER_FLOW_OVER_AUM", display=display.data_window)
+
+plot(dbpF, "EXPORT_ETF_DBP_FLOW", display=display.data_window)
+plot(dbpA, "EXPORT_ETF_DBP_AUM", display=display.data_window)
+plot(not na(dbpA) and dbpA != 0 ? dbpF/dbpA : na,
+    "EXPORT_ETF_DBP_FLOW_OVER_AUM", display=display.data_window)
+
+plot(dbbF, "EXPORT_ETF_DBB_FLOW", display=display.data_window)
+plot(dbbA, "EXPORT_ETF_DBB_AUM", display=display.data_window)
+plot(not na(dbbA) and dbbA != 0 ? dbbF/dbbA : na,
+    "EXPORT_ETF_DBB_FLOW_OVER_AUM", display=display.data_window)
+
+plot(gltrF, "EXPORT_ETF_GLTR_FLOW", display=display.data_window)
+plot(gltrA, "EXPORT_ETF_GLTR_AUM", display=display.data_window)
+plot(not na(gltrA) and gltrA != 0 ? gltrF/gltrA : na,
+    "EXPORT_ETF_GLTR_FLOW_OVER_AUM", display=display.data_window)
+
+plot(float(time_close), "EXPORT_ETF_BAR_END_TIME", display=display.data_window)
+plot(barstate.isconfirmed ? 1.0 : 0.0, "EXPORT_ETF_BAR_CONFIRMED", display=display.data_window)
+
+var table status = table.new(position.top_right, 3, 7, border_width=1)
+if barstate.islast
+    table.cell(status, 0, 0, "Metals ETF Flow v1")
+    table.cell(status, 1, 0, timeframe.period)
+    table.cell(status, 2, 0, "18 / 40 req")
+
+    table.cell(status, 0, 1, "Gold")
+    table.cell(status, 2, 1, na(gldF) ? "CHECK" : "OK")
+    table.cell(status, 0, 2, "Silver")
+    table.cell(status, 2, 2, na(slvF) and na(sivrF) ? "CHECK" : "OK")
+    table.cell(status, 0, 3, "Platinum")
+    table.cell(status, 2, 3, na(ppltF) ? "CHECK" : "OK")
+    table.cell(status, 0, 4, "Palladium")
+    table.cell(status, 2, 4, na(pallF) ? "CHECK" : "OK")
+    table.cell(status, 0, 5, "Copper/base")
+    table.cell(status, 2, 5, na(cperF) and na(dbbF) ? "CHECK" : "OK")
+    table.cell(status, 0, 6, "Use")
+    table.cell(status, 1, 6, "1D")
+    table.cell(status, 2, 6, timeframe.isdaily ? "OK" : "USE 1D")
