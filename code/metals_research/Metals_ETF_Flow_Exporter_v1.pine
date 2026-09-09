@@ -1,6 +1,6 @@
 //@version=6
 indicator("Metals ETF Flow Exporter v1", shorttitle="Metals ETF Flow v1",
-     overlay=false, max_bars_back=10000)
+     overlay=false, dynamic_requests=true, max_bars_back=10000)
 
 // Run on 1D.
 // Daily FUND_FLOWS and AUM are exported separately so Python can build
