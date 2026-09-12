@@ -120,6 +120,17 @@ def bootstrap(a,b,B=5000,block=26,seed=20260912):
     return dict(n_common_weeks=n,prob_b_higher_sortino=c[0]/B,prob_b_lower_maxdd_magnitude=c[1]/B,prob_b_lower_ulcer=c[2]/B,prob_b_improves_all_three=c[3]/B)
 
 
+def bootstrap_simple(a,b,B=5000,block=26,seed=20260912):
+    q=pd.concat([a.rename("a"),b.rename("b")],axis=1).dropna(); A=q.a.to_numpy(); Bv=q.b.to_numpy(); n=len(q); nb=math.ceil(n/block); rng=np.random.default_rng(seed)
+    def met(x):
+        ann=x.mean()*52; down=np.sqrt(np.mean(np.minimum(x,0)**2))*np.sqrt(52); eq=np.cumprod(1+x); dd=eq/np.maximum.accumulate(eq)-1
+        return ann/down,dd.min(),np.sqrt(np.mean((dd*100)**2))
+    c=np.zeros(4)
+    for _ in range(B):
+        starts=rng.integers(0,n,size=nb); idx=np.concatenate([np.arange(s,s+block)%n for s in starts])[:n]; ma=met(A[idx]); mb=met(Bv[idx]); z=[mb[0]>ma[0],mb[1]>ma[1],mb[2]<ma[2]]; c[:3]+=z; c[3]+=all(z)
+    return dict(n_common_weeks=n,prob_b_higher_sortino=c[0]/B,prob_b_lower_maxdd_magnitude=c[1]/B,prob_b_lower_ulcer=c[2]/B,prob_b_improves_all_three=c[3]/B)
+
+
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--metals",required=True,type=Path); ap.add_argument("--combined",required=True,type=Path); ap.add_argument("--phase6-panel",required=True,type=Path); ap.add_argument("--out",required=True,type=Path); a=ap.parse_args(); a.out.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(a.metals) as z:
@@ -137,11 +148,15 @@ def main():
     pd.DataFrame([{"comparison":"2016 blend vs Phase6",**bootstrap(common[cols[0]],common[cols[3]])},{"comparison":"PIX3 blend vs Phase6",**bootstrap(common[cols[0]],common[cols[4]])}]).to_csv(a.out/"pix_double_pca_block_bootstrap.csv",index=False)
     with zipfile.ZipFile(a.combined) as z: book=pd.read_csv(z.open("data/combined_equity_fx_portfolio_corrected/01_aligned_weekly_panel.csv"))
     book=book.rename(columns={book.columns[0]:"friday"}); book.friday=pd.to_datetime(book.friday); book=book.set_index("friday"); book["base"]=.5*book.EQ_C20+.5*1.25*book.FX_65FAST_35ALT
-    rows=[]
+    rows=[]; funded={}
     for name,s in {"Phase6 leading composite":common[cols[0]],"50/50 Phase6 + 2016 Broad10 PIX-div H1":common[cols[3]],"50/50 Phase6 + PIX3-inspired PIX-div H1":common[cols[4]]}.items():
         q=pd.concat([book.base,realized(s).rename("metal")],axis=1).dropna()
-        for wt in [0,.10,.20,.25]: rows.append({"strategy":name,"metals_weight":wt,"sample_start":q.index.min(),"sample_end":q.index.max(),**dsimple((1-wt)*q.base+wt*q.metal)})
+        for wt in [0,.10,.20,.25]:
+            mix=(1-wt)*q.base+wt*q.metal; rows.append({"strategy":name,"metals_weight":wt,"sample_start":q.index.min(),"sample_end":q.index.max(),**dsimple(mix)})
+            if wt==.25: funded[name]=mix
     pd.DataFrame(rows).to_csv(a.out/"pix_double_pca_portfolio_integration.csv",index=False)
+    pf=pd.concat({k:v for k,v in funded.items()},axis=1).dropna()
+    pd.DataFrame([{"comparison":"2016 blend vs Phase6 at 25% funded metals",**bootstrap_simple(pf["Phase6 leading composite"],pf["50/50 Phase6 + 2016 Broad10 PIX-div H1"])},{"comparison":"PIX3 blend vs Phase6 at 25% funded metals",**bootstrap_simple(pf["Phase6 leading composite"],pf["50/50 Phase6 + PIX3-inspired PIX-div H1"])}]).to_csv(a.out/"pix_double_pca_portfolio_bootstrap.csv",index=False)
     pd.DataFrame([{"cot_definition":"legacy_noncommercial",**dlog(pd.concat([core_div,core_mm],axis=1).dropna().iloc[:,0])},{"cot_definition":"managed_money",**dlog(pd.concat([core_div,core_mm],axis=1).dropna().iloc[:,1])}]).to_csv(a.out/"pix_double_pca_cot_sensitivity.csv",index=False)
 
 if __name__=="__main__": main()
