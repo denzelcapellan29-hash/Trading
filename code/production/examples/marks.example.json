@@ -1,0 +1,14 @@
+{
+  "CASH|EUR|USD|IDEALPRO|||||1": {
+    "timestamp": "2026-08-29T16:00:00+00:00",
+    "price_quote_per_base": 1.1,
+    "base_to_account": 1.1,
+    "quote_to_account": 1.0
+  },
+  "STK|AAPL|USD|SMART|NASDAQ||||1": {
+    "timestamp": "2026-08-29T16:00:00+00:00",
+    "price_quote_per_base": 230.0,
+    "base_to_account": 230.0,
+    "quote_to_account": 1.0
+  }
+}
