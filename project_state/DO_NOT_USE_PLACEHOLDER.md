@@ -1,1 +1,0 @@
-This placeholder will be removed or replaced before final handoff.
