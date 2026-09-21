@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "strategies": {
+    "FAST_31PAIR_PRODUCTION": {
+      "historical_target_source": "FX_FAST_DATA_PACKAGE_2026-08-28/data/fx_fast_trade_ledger.csv.gz",
+      "historical_target_status": "EXACT_LEDGER_AVAILABLE",
+      "historical_target_replay_required": true,
+      "live_signal_source_status": "CANONICAL_PINE_AND_ALLOCATOR_EXIST_IN_FX_HANDOFF",
+      "live_authorized": false,
+      "live_blocker": "wire canonical FAST signal/export into StrategyTarget and complete IBKR paper parity"
+    },
+    "FX_ALT_RM": {
+      "historical_target_source": "router_selected_trades.csv + exact router/riskmatch scale histories",
+      "historical_target_status": "EXACT_DOWNSTREAM_LEDGER_AVAILABLE",
+      "historical_target_replay_required": true,
+      "live_signal_source_status": "UPSTREAM_CANDIDATE_GENERATION_PARITY_NOT_CLOSED",
+      "live_authorized": false,
+      "live_blocker": "recover/verify upstream corridor/rotation/compression candidate generators"
+    },
+    "CORRIDOR_ACCEPT": {
+      "historical_target_source": "causal_target_trades_all_states.csv.gz filtered corridor/accept",
+      "historical_target_status": "EXACT_EXECUTION_LEDGER_AVAILABLE",
+      "historical_target_replay_required": true,
+      "live_signal_source_status": "LIVE_78M_MAP_TRIGGER_ENGINE_NOT_BUILT",
+      "live_authorized": false,
+      "live_blocker": "build causal 78m map/touch/acceptance live signal engine and prove parity"
+    },
+    "MOMENTUM_BARBELL": {
+      "historical_target_source": "barbell_trade_panel.csv.gz",
+      "historical_target_status": "DETERMINISTIC_RECONSTRUCTION_NOT_EXACT_ORIGINAL_LEDGER",
+      "historical_target_replay_required": true,
+      "live_signal_source_status": "EXACT_PRODUCTION_EXPORTER_NOT_FROZEN",
+      "live_authorized": false,
+      "live_blocker": "recover/regenerate exact frozen Barbell selected-ticker ledger and exporter"
+    },
+    "AGREEMENT_REVERSION": {
+      "historical_target_source": null,
+      "historical_target_status": "BLOCKED_NO_CANONICAL_POSITION_LEDGER",
+      "historical_target_replay_required": true,
+      "live_signal_source_status": "DOCUMENTED_RULES_ONLY",
+      "live_authorized": false,
+      "live_blocker": "regenerate exact four-week rebalance holdings/weights from canonical source data"
+    },
+    "PCA_STATARB_8910": {
+      "historical_target_source": null,
+      "historical_target_status": "BLOCKED_NO_CANONICAL_POSITION_LEDGER",
+      "historical_target_replay_required": true,
+      "live_signal_source_status": "RESEARCH_SCRIPT_AND_RETURN_STREAM_ONLY",
+      "live_authorized": false,
+      "live_blocker": "regenerate exact K8/K9/K10 holdings/weights from canonical daily OHLCV"
+    },
+    "EQUITY_PUT_OVERLAY": {
+      "historical_target_source": "benchmark overlay return history only",
+      "historical_target_status": "BLOCKED_NO_TRADABLE_CONTRACT_LEDGER",
+      "historical_target_replay_required": true,
+      "live_signal_source_status": "TRADABLE_OPTION_SELECTION_RULE_NOT_FROZEN",
+      "live_authorized": false,
+      "live_blocker": "freeze exact SPY option contract-selection/roll/execution rules"
+    }
+  }
+}
