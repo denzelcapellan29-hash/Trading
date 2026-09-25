@@ -1,0 +1,2 @@
+tradingview-api-python
+pandas>=2.0
