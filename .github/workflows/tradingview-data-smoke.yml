@@ -1,0 +1,40 @@
+name: TradingView Data Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tradingview-data-smoke.yml'
+      - 'code/tradingview_data/github_smoke_test.py'
+
+permissions:
+  contents: read
+
+jobs:
+  tradingview-data-access:
+    name: Authenticated read-only data test
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install read-only data client
+        run: python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Test five TradingView market-data series
+        env:
+          TV_SESSIONID: ${{ secrets.TV_SESSIONID }}
+          TV_SESSIONID_SIGN: ${{ secrets.TV_SESSIONID_SIGN }}
+        run: python code/tradingview_data/github_smoke_test.py
+      - name: Retain CSV samples and safe status
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tradingview-data-smoke
+          path: artifacts/tradingview_smoke/
+          if-no-files-found: warn
+          retention-days: 7
