@@ -1,0 +1,102 @@
+{
+  "branch": "production/tv-python-ibkr-shadow-bridge",
+  "branch_head": "bea94a05e9160c3c3eba775021245c783e50cb6e",
+  "canonical_drive_destinations": {
+    "immutable_milestone": {
+      "bytes": 53552,
+      "folder": "reports",
+      "id": "1XtSBNeQZghQTCcZMCXiO4UzGkYolhsKw",
+      "sha256": "6ec0942fbc26002b7c18977b5a4ec6d9b3fa3724e487c5179c3f742c4dd5a70e"
+    },
+    "project_index": {
+      "folder": "project_state",
+      "id": "1wuWB4zZlwlzCg2gNPEg-me9tghceK6Ay"
+    },
+    "release_manifest": {
+      "folder": "project_state",
+      "id": "1W-ZYJLgrZbF5eS9gmDg0PcMm2wY1Ov2d"
+    },
+    "report": {
+      "folder": "reports",
+      "id": "1Sox2kkE4cdKgeExLJhtpFsfo0vQI4_ah"
+    }
+  },
+  "deprioritized": "perpetual historical first-seen TV database and GitHub Drive OAuth",
+  "draft_pr": 4,
+  "file_manifest": {
+    "code/IBKR_Production_Infrastructure_V1_2026-08-29.zip": {
+      "sha256": "d0243ac20bb48ef4eff702d43700bec6464313588d8204ffa10fa8d6e030019c",
+      "size": 37973
+    },
+    "code/TV_FAST_IBKR_SHADOW_BRIDGE.md": {
+      "sha256": "4d51e88e0173acd838815e1f40d879c828316dab3b26486b263a2b0c2c0291e7",
+      "size": 5962
+    },
+    "code/test_tv_fast_bridge.py": {
+      "sha256": "d745afbc9d635d7237c35c7dc29454767476cf4d67e7f08ee71c1303328f047b",
+      "size": 10201
+    },
+    "code/tv-fast-ibkr-shadow-smoke.yml": {
+      "sha256": "87ab31fa16b1edea83cdc5a29c88a4f1683ee02c9a1ada49c2f1ab491fa733ff",
+      "size": 1575
+    },
+    "code/tv_fast_bridge.py": {
+      "sha256": "7d6edafbdc37c0f167948ca86b0d8a32f3a3eda7f7258333f8136f0abecdffcb",
+      "size": 9330
+    },
+    "code/tv_fast_shadow.py": {
+      "sha256": "adf0e3b312ea1d3df74d1274a5be84118df362e31fe9719f72634447f9f915e1",
+      "size": 5425
+    },
+    "project_state/PROJECT_INDEX.md": {
+      "sha256": "b854be35c0fb82bc2bbd29a8b4edd92e014c8242c0cfa5490867f702117615bf",
+      "size": 6764
+    },
+    "reports/TV_FAST_PYTHON_IBKR_SHADOW_MILESTONE.md": {
+      "sha256": "e249154709808b31f1e4056f633f39267684035b6fdba2099f13c47eabd6d066",
+      "size": 2335
+    }
+  },
+  "freeze_id": "FX-FAST-2026-08-28",
+  "latest_gh_run": {
+    "actual_tv_fxcm_1minute_fresh": 31,
+    "expected_tv_fxcm_model_spot": 31,
+    "ibkr_connection_in_runner": false,
+    "id": 36641045835,
+    "runner_verified_utc": "2026-09-29T22:41:57Z",
+    "status": "success",
+    "tests_passed": 25,
+    "url": "https://github.com/denzelcapellan29-hash/Trading/actions/runs/36641045835"
+  },
+  "local_tests": {
+    "baseline_and_new": 19,
+    "failures": 0,
+    "scope": "offline fake TradingView + original IBKR V1 simulated portfolio/reconciliation"
+  },
+  "next_executable_task": "Finish complete causal frozen FAST 31-pair current-source signal/exit/allocator producer and same-decision Python/Pine parity, then feed qualified targets to existing shadow bridge.",
+  "orders_enabled": false,
+  "previous_ibkr_machine_check": {
+    "handshake": "verified in previous August/September equity session, not this run",
+    "mode": "TWS paper",
+    "port": 7497
+  },
+  "prior_archive_preserved": {
+    "genuine_capture_batches": 3,
+    "status": "private_drive_preserved_no_new_capture"
+  },
+  "production_gates": {
+    "account_risk_caps": "UNFROZEN",
+    "actual_all_31_fast_signal_exit_allocator": "BLOCK",
+    "complete_equity_generators": "PARTIAL",
+    "marks_to_simulated_ibkr_intents": "PASS",
+    "qualified_fast_targets": "BLOCK",
+    "real_ibkr_paper_gateway_reconciliation": "NOT_YET_RUN",
+    "tv_fxcm_31_live_mark": "PASS"
+  },
+  "retuning": false,
+  "snapshot_file_manifest_note": "file_manifest indexes immutable 2026-09-29 bundle contents; living canonical index subsequently appended verified Drive IDs.",
+  "stacked_on_draft_pr": 2,
+  "state": "TV_FXCM_MARK_INPUT_AND_PYTHON_SHADOW_INTERFACE_VERIFIED_SIGNAL_GENERATION_BLOCKED",
+  "trading_repo": "denzelcapellan29-hash/Trading",
+  "unmerged": true
+}
