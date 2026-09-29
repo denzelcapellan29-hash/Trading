@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from fast_live_signal_diagnostic import collect_symbols, expr, derive_current_signals, aligned_pair_inputs
+from fast_live_signal_diagnostic import collect_symbols, expr, derive_current_signals, aligned_pair_inputs, _select_observed_chart_bar
 from trading_prod.fast_frozen_signal_core import SignalBlocked
 
 HERE=Path(__file__).resolve().parents[1] / 'tools'
@@ -35,6 +35,15 @@ class IngestTests(unittest.TestCase):
   wm,ends,eg=aligned_pair_inputs(pair,p,charts,obs)
   self.assertTrue(all(t<=obs for t in ends))
   self.assertEqual(wm.shape[1],len(p['factors'])+1)
+ def test_pine_gap_off_holiday_carry_is_not_missing_data(self):
+  # Verified chart-age gaps: NI225 daily 5.9 days and FAGR weekly 11.6 days.
+  # A preceding bar is valid for a diagnostic, but this does not backdate
+  # when TradingView/other sources were genuinely observed by the runner.
+  daily=np.array([[1000.,123.45]]);weekly=np.array([[1000.,321.0]])
+  self.assertEqual(_select_observed_chart_bar(daily,1000.+5.9*86400.,7*86400.),123.45)
+  self.assertEqual(_select_observed_chart_bar(weekly,1000.+11.6*86400.,14*86400.),321.)
+  self.assertTrue(np.isnan(_select_observed_chart_bar(daily,1000.+8*86400.,7*86400.)))
+  self.assertTrue(np.isnan(_select_observed_chart_bar(weekly,1000.+15*86400.,14*86400.)))
  def test_missing_model_lookback_is_block(self):
   p=C['pairs']['EURUSD'];sym=p['fxcm_model_symbol']
   with self.assertRaisesRegex(SignalBlocked,'INSUFFICIENT_MODEL_LOOKBACK'):
