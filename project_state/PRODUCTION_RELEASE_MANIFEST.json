@@ -1,6 +1,6 @@
 {
   "branch": "production/tv-python-ibkr-shadow-bridge",
-  "branch_head": "bea94a05e9160c3c3eba775021245c783e50cb6e",
+  "branch_head": "beae7cf90620522b4864490257333bfcce1df453",
   "canonical_drive_destinations": {
     "immutable_milestone": {
       "bytes": 53552,
@@ -21,6 +21,38 @@
       "id": "1Sox2kkE4cdKgeExLJhtpFsfo0vQI4_ah"
     }
   },
+  "current_source_signal_milestone": {
+    "actual_observed_utc": "2026-09-29T23:07:02.764660Z",
+    "artifact_id": 11067348389,
+    "artifact_zip_sha256": "6830172ba0e91df63036c7d99dc6c06ece09f2ee1d8fb1e4dc1b111a0e82ebf7",
+    "canonical_private_drive_signals_id": "1iCPvp7rbaqDGy2x-vwAJ18cSWGnOctdB",
+    "conditional_original_pine_branch_regression": "493/493",
+    "engineering_fix": "frozen_Pine_gaps_off_bounded_daily7_weekly14_no_strategy_parameter_change",
+    "full_31_pair_models": 31,
+    "full_eg126_available": 31,
+    "full_eg63_available": 31,
+    "full_source_series": 194,
+    "immutable_zip_id": "1MUdyoJLLj8wl3xlXRHJKP8xqjgl5LMnD",
+    "immutable_zip_sha256": "3772096b101274fbfea25b0de171d297c0a97e59f9650e5635678a833f9525a7",
+    "observed_late_after_Monday_entry": true,
+    "one_long": [
+      "CHFJPY"
+    ],
+    "orders_authorized": false,
+    "other_no_signal": 28,
+    "report_id": "1vNuRMqbujS-N48tsqKIDsiigDniDsE2e",
+    "run_head": "beae7cf90620522b4864490257333bfcce1df453",
+    "run_id": 36643320360,
+    "source_pine_sha_verified": "31/31",
+    "status": "RETROSPECTIVE_RESEARCH_ONLY",
+    "targeted_gap_root_cause_run": 36643093219,
+    "targeted_surfaces": 104,
+    "tests_passed_on_actual_runner": 41,
+    "two_shorts": [
+      "AUDCAD",
+      "CADCHF"
+    ]
+  },
   "deprioritized": "perpetual historical first-seen TV database and GitHub Drive OAuth",
   "draft_pr": 4,
   "file_manifest": {
@@ -31,6 +63,15 @@
     "code/TV_FAST_IBKR_SHADOW_BRIDGE.md": {
       "sha256": "4d51e88e0173acd838815e1f40d879c828316dab3b26486b263a2b0c2c0291e7",
       "size": 5962
+    },
+    "code/production/src/trading_prod/fast_frozen_signal_core.py": {
+      "sha256": "0845673b8e1de54249b70868a8160134ea2b247b90e8e60317948f9a7f251b74"
+    },
+    "code/production/tools/fast_live_signal_diagnostic.py": {
+      "sha256": "aab482bc73e0442f6dbb7a2014eba43de2b189cffbad8da8123df0ee05180247"
+    },
+    "code/production/tools/frozen_fast_pair_inputs.json": {
+      "sha256": "2ac027db44aa707c15039eef49e9641eeb1a57a5eac09cb9dfc57f2c0ed29ecc"
     },
     "code/test_tv_fast_bridge.py": {
       "sha256": "d745afbc9d635d7237c35c7dc29454767476cf4d67e7f08ee71c1303328f047b",
@@ -51,6 +92,10 @@
     "project_state/PROJECT_INDEX.md": {
       "sha256": "b854be35c0fb82bc2bbd29a8b4edd92e014c8242c0cfa5490867f702117615bf",
       "size": 6764
+    },
+    "reports/FAST_31Pair_Signal_Implementation_2026-09-29.zip": {
+      "sha256": "3772096b101274fbfea25b0de171d297c0a97e59f9650e5635678a833f9525a7",
+      "size": 25354
     },
     "reports/TV_FAST_PYTHON_IBKR_SHADOW_MILESTONE.md": {
       "sha256": "e249154709808b31f1e4056f633f39267684035b6fdba2099f13c47eabd6d066",
@@ -73,7 +118,7 @@
     "failures": 0,
     "scope": "offline fake TradingView + original IBKR V1 simulated portfolio/reconciliation"
   },
-  "next_executable_task": "Finish complete causal frozen FAST 31-pair current-source signal/exit/allocator producer and same-decision Python/Pine parity, then feed qualified targets to existing shadow bridge.",
+  "next_executable_task": "Next prospective Monday 2026-10-05 09:00 Europe/London: independently capture simultaneous full 31-pair Pine and Python model/factor/EG/confidence references using true known sources, reproduce original OANDA execution 13-week vol + full frozen bounded 8%-risk cohort, then only upon parity connect qualified StrategyTarget to PR4 and begin local IBKR paper reconciliation; do not backdate Tuesday research signals.",
   "orders_enabled": false,
   "previous_ibkr_machine_check": {
     "handshake": "verified in previous August/September equity session, not this run",
@@ -86,17 +131,18 @@
   },
   "production_gates": {
     "account_risk_caps": "UNFROZEN",
-    "actual_all_31_fast_signal_exit_allocator": "BLOCK",
+    "actual_all_31_fast_signal_exit_allocator": "BLOCK_ASOF_EXIT_AND_EXECUTION_VOL_ALLOCATION",
     "complete_equity_generators": "PARTIAL",
+    "current_source_frozen_signal_31_pair_research_diagnostic": "PASS_ALL31_AS_RETRIEVED_TUESDAY_NOT_ASOF",
     "marks_to_simulated_ibkr_intents": "PASS",
-    "qualified_fast_targets": "BLOCK",
+    "qualified_fast_targets": "BLOCK_NOT_MONDAY_SOURCE_VERIFIED_OR_FULLY_ALLOCATED",
     "real_ibkr_paper_gateway_reconciliation": "NOT_YET_RUN",
     "tv_fxcm_31_live_mark": "PASS"
   },
   "retuning": false,
   "snapshot_file_manifest_note": "file_manifest indexes immutable 2026-09-29 bundle contents; living canonical index subsequently appended verified Drive IDs.",
   "stacked_on_draft_pr": 2,
-  "state": "TV_FXCM_MARK_INPUT_AND_PYTHON_SHADOW_INTERFACE_VERIFIED_SIGNAL_GENERATION_BLOCKED",
+  "state": "SHADOW_FULL31_CURRENT_SOURCE_SIGNAL_DIAGNOSTICS_PASS_PROSPECTIVE_ASOF_AND_TRADE_GATE_OPEN",
   "trading_repo": "denzelcapellan29-hash/Trading",
   "unmerged": true
 }
