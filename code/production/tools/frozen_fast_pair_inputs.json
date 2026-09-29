@@ -1,0 +1,1302 @@
+{
+  "freeze_id": "FX-FAST-2026-08-28",
+  "input_source": "31 immutable Pine scripts and PAIR_MODEL_CONFIG.json in full frozen private handoff",
+  "pairs": {
+    "EURUSD": {
+      "fxcm_model_symbol": "FX:EURUSD",
+      "pine_sha256": "2892b869835e3d4e44f1db3f030c0253bd95f7e82cacb592def8358b725aa7ab",
+      "factors": [
+        {
+          "symbols": {
+            "EU03MY": "TVC:EU03MY",
+            "US03MY": "TVC:US03MY"
+          },
+          "expression": "eu03my - us03my",
+          "name": "EU-US 3M spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU02Y": "TVC:EU02Y",
+            "US10Y": "TVC:US10Y",
+            "US02Y": "TVC:US02Y"
+          },
+          "expression": "(eu10y - eu02y) - (us10y - us02y)",
+          "name": "EU-US 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "SXXP": "TVC:SXXP",
+            "SPX": "TVC:SPX"
+          },
+          "expression": "f_log(sxxp) - f_log(spx)",
+          "name": "Europe-US relative equities"
+        },
+        {
+          "symbols": {
+            "BTPBUND": "TVC:BTPBUND"
+          },
+          "expression": "btpbund",
+          "name": "BTP-Bund spread"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "GBPUSD": {
+      "fxcm_model_symbol": "FX:GBPUSD",
+      "pine_sha256": "bdac2e0eda0306e4000be68c20f784c5bacbe068af0a9c09fc5ffc76e24e0bc7",
+      "factors": [
+        {
+          "symbols": {
+            "GB02Y": "TVC:GB02Y",
+            "US02Y": "TVC:US02Y"
+          },
+          "expression": "gb02y - us02y",
+          "name": "UK-US 2Y spread"
+        },
+        {
+          "symbols": {
+            "GB10Y": "TVC:GB10Y",
+            "GB02Y": "TVC:GB02Y",
+            "US10Y": "TVC:US10Y",
+            "US02Y": "TVC:US02Y"
+          },
+          "expression": "(gb10y - gb02y) - (us10y - us02y)",
+          "name": "UK-US 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "ACWI": "BATS:ACWI"
+          },
+          "expression": "f_log(acwi)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "f_log(brent)",
+          "name": "Brent"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "AUDUSD": {
+      "fxcm_model_symbol": "FX:AUDUSD",
+      "pine_sha256": "cd8f2e1a8816eb089096a3e5924b0b0be9163a0712353ac7a49305b680c2e81b",
+      "factors": [
+        {
+          "symbols": {
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "f_log(brent)",
+          "name": "Brent"
+        },
+        {
+          "symbols": {
+            "AU01Y": "TVC:AU01Y",
+            "US01Y": "TVC:US01Y"
+          },
+          "expression": "au01y - us01y",
+          "name": "AU-US 1Y spread"
+        },
+        {
+          "symbols": {
+            "COPPER": "COMEX:HG1!"
+          },
+          "expression": "f_log(copper)",
+          "name": "Copper"
+        },
+        {
+          "symbols": {
+            "AU10Y": "TVC:AU10Y",
+            "AU02Y": "TVC:AU02Y",
+            "US10Y": "TVC:US10Y",
+            "US02Y": "TVC:US02Y"
+          },
+          "expression": "(au10y - au02y) - (us10y - us02y)",
+          "name": "AU-US 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "ACWI": "BATS:ACWI"
+          },
+          "expression": "f_log(acwi)",
+          "name": "Global equities"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "NZDUSD": {
+      "fxcm_model_symbol": "FX:NZDUSD",
+      "pine_sha256": "bfe5aab4cc40bea63b602213666d97596f837b170eb3667966a81eb9804f7633",
+      "factors": [
+        {
+          "symbols": {
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "f_log(brent)",
+          "name": "Brent"
+        },
+        {
+          "symbols": {
+            "FAGR": "LSE_DLY:FAGR"
+          },
+          "expression": "f_log(fagr)",
+          "name": "Agriculture"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "NZ03MY": "TVC:NZ03MY",
+            "US03MY": "TVC:US03MY"
+          },
+          "expression": "nz03my - us03my",
+          "name": "NZ-US 3M spread"
+        },
+        {
+          "symbols": {
+            "NZ10Y": "TVC:NZ10Y",
+            "NZ02Y": "TVC:NZ02Y",
+            "US10Y": "TVC:US10Y",
+            "US02Y": "TVC:US02Y"
+          },
+          "expression": "(nz10y - nz02y) - (us10y - us02y)",
+          "name": "NZ-US 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "VPL": "BATS:VPL",
+            "SPX": "TVC:SPX"
+          },
+          "expression": "f_log(vpl) - f_log(spx)",
+          "name": "Asia-Pacific-US equities"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "USDCAD": {
+      "fxcm_model_symbol": "FX:USDCAD",
+      "pine_sha256": "743e1f564e794b96c9376fee1e7d248be80a61c2079dbd510b00e8083b32558f",
+      "factors": [
+        {
+          "symbols": {
+            "US03MY": "TVC:US03MY",
+            "CA03MY": "TVC:CA03MY"
+          },
+          "expression": "us03my - ca03my",
+          "name": "US-CA 3M spread"
+        },
+        {
+          "symbols": {
+            "US10Y": "TVC:US10Y",
+            "US02Y": "TVC:US02Y",
+            "CA10Y": "TVC:CA10Y",
+            "CA02Y": "TVC:CA02Y"
+          },
+          "expression": "(us10y - us02y) - (ca10y - ca02y)",
+          "name": "US-CA 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "ACWI": "BATS:ACWI"
+          },
+          "expression": "f_log(acwi)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "WTI": "TVC:USOIL"
+          },
+          "expression": "f_log(wti)",
+          "name": "WTI"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "USDCHF": {
+      "fxcm_model_symbol": "FX:USDCHF",
+      "pine_sha256": "d66a65f0e8d55970821b52fa41a842c544f821f19c00a02777a2214ff121d433",
+      "factors": [
+        {
+          "symbols": {
+            "US06MY": "TVC:US06MY",
+            "CH06MY": "TVC:CH06MY"
+          },
+          "expression": "us06my - ch06my",
+          "name": "US-CH 6M spread"
+        },
+        {
+          "symbols": {
+            "US10Y": "TVC:US10Y",
+            "US06MY": "TVC:US06MY",
+            "CH10Y": "TVC:CH10Y",
+            "CH06MY": "TVC:CH06MY"
+          },
+          "expression": "(us10y - us06my) - (ch10y - ch06my)",
+          "name": "US-CH 10Y-6M box"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "f_log(brent)",
+          "name": "Brent"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "USDJPY": {
+      "fxcm_model_symbol": "FX:USDJPY",
+      "pine_sha256": "ecb88fb46d730fe581fe4053b7d5c216535b0b9ff42a4babcd3f5194ae9bf7a8",
+      "factors": [
+        {
+          "symbols": {
+            "US03MY": "TVC:US03MY",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "us03my - jp03my",
+          "name": "US-JP 3M spread"
+        },
+        {
+          "symbols": {
+            "US10Y": "TVC:US10Y",
+            "US02Y": "TVC:US02Y",
+            "JP10Y": "TVC:JP10Y",
+            "JP02Y": "TVC:JP02Y"
+          },
+          "expression": "(us10y - us02y) - (jp10y - jp02y)",
+          "name": "US-JP 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "NI225": "TVC:NI225"
+          },
+          "expression": "f_log(ni225)",
+          "name": "Japan equities"
+        },
+        {
+          "symbols": {
+            "ACWI": "BATS:ACWI"
+          },
+          "expression": "f_log(acwi)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "f_log(brent)",
+          "name": "Brent"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "USDNOK": {
+      "fxcm_model_symbol": "FX:USDNOK",
+      "pine_sha256": "31bda252e8031c4a4c564315610025c34fd63fc592c784c3aa15680c928bc0ba",
+      "factors": [
+        {
+          "symbols": {
+            "US03MY": "TVC:US03MY",
+            "NO06MY": "TVC:NO06MY"
+          },
+          "expression": "us03my - no06my",
+          "name": "US-NO short spread"
+        },
+        {
+          "symbols": {
+            "US10Y": "TVC:US10Y",
+            "US03MY": "TVC:US03MY",
+            "NO10Y": "TVC:NO10Y",
+            "NO06MY": "TVC:NO06MY"
+          },
+          "expression": "(us10y - us03my) - (no10y - no06my)",
+          "name": "US-NO curve box"
+        },
+        {
+          "symbols": {
+            "WTI": "TVC:USOIL"
+          },
+          "expression": "f_log(wti)",
+          "name": "WTI"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "USDSEK": {
+      "fxcm_model_symbol": "FX:USDSEK",
+      "pine_sha256": "aafc9bc42803c982e403d447c7a180f5f3a77e34daf74b9c6d082b01fa0b4aaa",
+      "factors": [
+        {
+          "symbols": {
+            "US03MY": "TVC:US03MY",
+            "SE03MY": "TVC:SE03MY"
+          },
+          "expression": "us03my - se03my",
+          "name": "US-SE 3M spread"
+        },
+        {
+          "symbols": {
+            "US10Y": "TVC:US10Y",
+            "US02Y": "TVC:US02Y",
+            "SE10Y": "TVC:SE10Y",
+            "SE02Y": "TVC:SE02Y"
+          },
+          "expression": "(us10y - us02y) - (se10y - se02y)",
+          "name": "US-SE 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "f_log(brent)",
+          "name": "Brent"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "EURGBP": {
+      "fxcm_model_symbol": "FX:EURGBP",
+      "pine_sha256": "c64784d0da4edc0a2a9f474029928fff96bcdd6a8144c1161abdb8fa2ea5beba",
+      "factors": [
+        {
+          "symbols": {
+            "EU03MY": "TVC:EU03MY",
+            "GB03MY": "TVC:GB03MY"
+          },
+          "expression": "eu03my - gb03my",
+          "name": "EU-GB 3M spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU02Y": "TVC:EU02Y",
+            "GB10Y": "TVC:GB10Y",
+            "GB02Y": "TVC:GB02Y"
+          },
+          "expression": "(eu10y - eu02y) - (gb10y - gb02y)",
+          "name": "EU-GB 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "SX5E": "TVC:SX5E",
+            "UKX": "TVC:UKX"
+          },
+          "expression": "f_log(sx5e) - f_log(ukx)",
+          "name": "Eurozone-UK equities"
+        },
+        {
+          "symbols": {
+            "IT10Y": "TVC:IT10Y",
+            "ES10Y": "TVC:ES10Y",
+            "DE10Y": "TVC:DE10Y"
+          },
+          "expression": "0.5 * (it10y + es10y) - de10y",
+          "name": "Peripheral spread"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "EURAUD": {
+      "fxcm_model_symbol": "FX:EURAUD",
+      "pine_sha256": "4b83cdfcefe044fb27cd0281d75748da165b2ff89e66fef02090be0380c7d560",
+      "factors": [
+        {
+          "symbols": {
+            "EU02Y": "TVC:EU02Y",
+            "AU02Y": "TVC:AU02Y"
+          },
+          "expression": "eu02y - au02y",
+          "name": "EU-AU 2Y spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU03MY": "TVC:EU03MY",
+            "AU10Y": "TVC:AU10Y",
+            "AU01Y": "TVC:AU01Y"
+          },
+          "expression": "(eu10y - eu03my) - (au10y - au01y)",
+          "name": "EU-AU curve box"
+        },
+        {
+          "symbols": {
+            "ACWI": "BATS:ACWI"
+          },
+          "expression": "f_log(acwi)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "IRON": "SGX:FEF1!",
+            "COAL": "ICEEUR:NCF1!",
+            "JKM": "NYMEX:JKM1!",
+            "BRENT": "TVC:UKOIL",
+            "TTF": "ICEENDEX:TFM1!"
+          },
+          "expression": "(f_log(iron) + f_log(coal) + f_log(jkm)) / 3.0 - (f_log(brent) + f_log(ttf)) / 2.0",
+          "name": "Australia-Europe commodity terms"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "EURNZD": {
+      "fxcm_model_symbol": "FX:EURNZD",
+      "pine_sha256": "c4c361906b5510c035d2ffc828ad51582efcbaaf0516d9a9dc444efe54c448cb",
+      "factors": [
+        {
+          "symbols": {
+            "EU03MY": "TVC:EU03MY",
+            "NZ03MY": "TVC:NZ03MY"
+          },
+          "expression": "eu03my - nz03my",
+          "name": "EU-NZ 3M spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU02Y": "TVC:EU02Y",
+            "NZ10Y": "TVC:NZ10Y",
+            "NZ02Y": "TVC:NZ02Y"
+          },
+          "expression": "(eu10y - eu02y) - (nz10y - nz02y)",
+          "name": "EU-NZ 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "FAGR": "LSE_DLY:FAGR",
+            "BRENT": "TVC:UKOIL",
+            "TTF": "ICEENDEX:TFM1!"
+          },
+          "expression": "f_log(fagr) - 0.5 * (f_log(brent) + f_log(ttf))",
+          "name": "Agriculture-Europe energy"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "EURCAD": {
+      "fxcm_model_symbol": "FX:EURCAD",
+      "pine_sha256": "222b25904eae66ac3bbacb7fdbd989673fe8ab3e3173b0b9fb2c3053ca72fd0e",
+      "factors": [
+        {
+          "symbols": {
+            "EU03MY": "TVC:EU03MY",
+            "CA03MY": "TVC:CA03MY"
+          },
+          "expression": "eu03my - ca03my",
+          "name": "EU-CA 3M spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU02Y": "TVC:EU02Y",
+            "CA10Y": "TVC:CA10Y",
+            "CA02Y": "TVC:CA02Y"
+          },
+          "expression": "(eu10y - eu02y) - (ca10y - ca02y)",
+          "name": "EU-CA 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "SX5E": "TVC:SX5E",
+            "TSX": "TSX:TSX"
+          },
+          "expression": "f_log(sx5e) - f_log(tsx)",
+          "name": "Eurozone-Canada equities"
+        },
+        {
+          "symbols": {
+            "WTI": "TVC:USOIL"
+          },
+          "expression": "f_log(wti)",
+          "name": "WTI"
+        },
+        {
+          "symbols": {
+            "TTF": "ICEENDEX:TFM1!",
+            "EURUSD": "FX:EURUSD"
+          },
+          "expression": "f_log(ttf) + f_log(eurusd)",
+          "name": "TTF in USD"
+        },
+        {
+          "symbols": {
+            "IT10Y": "TVC:IT10Y",
+            "ES10Y": "TVC:ES10Y",
+            "PT10Y": "TVC:PT10Y",
+            "DE10Y": "TVC:DE10Y"
+          },
+          "expression": "(it10y + es10y + pt10y) / 3.0 - de10y",
+          "name": "Peripheral spread"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "EURCHF": {
+      "fxcm_model_symbol": "FX:EURCHF",
+      "pine_sha256": "d5ca2ea1a0440feafb62773fffed6357c7c2712f9aa16ae5467183bca12ef837",
+      "factors": [
+        {
+          "symbols": {
+            "EU02Y": "TVC:EU02Y",
+            "CH02Y": "TVC:CH02Y"
+          },
+          "expression": "eu02y - ch02y",
+          "name": "EU-CH 2Y spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU02Y": "TVC:EU02Y",
+            "CH10Y": "TVC:CH10Y",
+            "CH06MY": "TVC:CH06MY"
+          },
+          "expression": "(eu10y - eu02y) - (ch10y - ch06my)",
+          "name": "EU-CH curve box"
+        },
+        {
+          "symbols": {
+            "SXXP": "TVC:SXXP",
+            "SPX": "TVC:SPX"
+          },
+          "expression": "f_log(sxxp) - f_log(spx)",
+          "name": "Europe-US equities"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "EURJPY": {
+      "fxcm_model_symbol": "FX:EURJPY",
+      "pine_sha256": "8ec1e75148505796bb2888b64070879b76a6055fd2dade7ffdbd87cbb8901469",
+      "factors": [
+        {
+          "symbols": {
+            "EU03MY": "TVC:EU03MY",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "eu03my - jp03my",
+          "name": "EU-JP 3M spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU02Y": "TVC:EU02Y",
+            "JP10Y": "TVC:JP10Y",
+            "JP02Y": "TVC:JP02Y"
+          },
+          "expression": "(eu10y - eu02y) - (jp10y - jp02y)",
+          "name": "EU-JP 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "JKM": "NYMEX:JKM1!",
+            "COAL": "ICEEUR:NCF1!",
+            "BRENT": "TVC:UKOIL",
+            "TTF": "ICEENDEX:TFM1!",
+            "EURUSD": "FX:EURUSD"
+          },
+          "expression": "(f_log(jkm) + f_log(coal) + f_log(brent)) / 3.0 - (f_log(ttf) + f_log(eurusd) + f_log(brent)) / 2.0",
+          "name": "Japan-Europe energy terms"
+        },
+        {
+          "symbols": {
+            "IT10Y": "TVC:IT10Y",
+            "ES10Y": "TVC:ES10Y",
+            "PT10Y": "TVC:PT10Y",
+            "DE10Y": "TVC:DE10Y"
+          },
+          "expression": "(it10y + es10y + pt10y) / 3.0 - de10y",
+          "name": "Peripheral spread"
+        },
+        {
+          "symbols": {
+            "SX5E": "TVC:SX5E",
+            "NI225": "TVC:NI225"
+          },
+          "expression": "f_log(sx5e) - f_log(ni225)",
+          "name": "Eurozone-Japan equities"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "EURNOK": {
+      "fxcm_model_symbol": "FX:EURNOK",
+      "pine_sha256": "1bdad4b8d79f9155f7177a12bb2c8915c602ec3c364b0477bb8eef224285c094",
+      "factors": [
+        {
+          "symbols": {
+            "EU06MY": "TVC:EU06MY",
+            "NO06MY": "TVC:NO06MY"
+          },
+          "expression": "eu06my - no06my",
+          "name": "EU-NO short spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU01Y": "TVC:EU01Y",
+            "NO10Y": "TVC:NO10Y",
+            "NO01Y": "TVC:NO01Y"
+          },
+          "expression": "(eu10y - eu01y) - (no10y - no01y)",
+          "name": "EU-NO 10Y-1Y box"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "f_log(brent)",
+          "name": "Brent"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "EURSEK": {
+      "fxcm_model_symbol": "FX:EURSEK",
+      "pine_sha256": "f6473e47acf7576ef308ab52ce6b3f2a27d942c620741c3e29ac59d361ef4e67",
+      "factors": [
+        {
+          "symbols": {
+            "EU06MY": "TVC:EU06MY",
+            "SE06MY": "TVC:SE06MY"
+          },
+          "expression": "eu06my - se06my",
+          "name": "EU-SE short spread"
+        },
+        {
+          "symbols": {
+            "EU10Y": "TVC:EU10Y",
+            "EU01MY": "TVC:EU01MY",
+            "SE10Y": "TVC:SE10Y",
+            "SE01MY": "TVC:SE01MY"
+          },
+          "expression": "(eu10y - eu01my) - (se10y - se01my)",
+          "name": "EU-SE 10Y-1M box"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "GBPAUD": {
+      "fxcm_model_symbol": "FX:GBPAUD",
+      "pine_sha256": "a63d8ed6ff63a7b2e6646bfe8c6b610f8c0c6e4c377f710d7a3d6a96ca8cd4a1",
+      "factors": [
+        {
+          "symbols": {
+            "GB03MY": "TVC:GB03MY",
+            "AU01Y": "TVC:AU01Y"
+          },
+          "expression": "gb03my - au01y",
+          "name": "GB-AU short spread"
+        },
+        {
+          "symbols": {
+            "GB10Y": "TVC:GB10Y",
+            "GB03MY": "TVC:GB03MY",
+            "AU10Y": "TVC:AU10Y",
+            "AU01Y": "TVC:AU01Y"
+          },
+          "expression": "(gb10y - gb03my) - (au10y - au01y)",
+          "name": "GB-AU curve box"
+        },
+        {
+          "symbols": {
+            "UKX": "TVC:UKX",
+            "XJO": "ASX_DLY:XJO"
+          },
+          "expression": "f_log(ukx) - f_log(xjo)",
+          "name": "UK-Australia equities"
+        },
+        {
+          "symbols": {
+            "IRON": "SGX:FEF1!",
+            "COAL": "ICEEUR:NCF1!",
+            "JKM": "NYMEX:JKM1!"
+          },
+          "expression": "(f_log(iron) + f_log(coal) + f_log(jkm)) / 3.0",
+          "name": "Australia commodity basket"
+        },
+        {
+          "symbols": {
+            "NBP": "ICEEUR:GWM1!",
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "0.5 * (f_log(nbp) + f_log(brent))",
+          "name": "UK energy basket"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "GBPNZD": {
+      "fxcm_model_symbol": "FX:GBPNZD",
+      "pine_sha256": "055a7bdc5079dc69e6495e5cf19afd219b285a73ee494bed131079f4612e3a1f",
+      "factors": [
+        {
+          "symbols": {
+            "GB03MY": "TVC:GB03MY",
+            "NZ03MY": "TVC:NZ03MY"
+          },
+          "expression": "gb03my - nz03my",
+          "name": "GB-NZ 3M spread"
+        },
+        {
+          "symbols": {
+            "GB10Y": "TVC:GB10Y",
+            "GB03MY": "TVC:GB03MY",
+            "NZ10Y": "TVC:NZ10Y",
+            "NZ03MY": "TVC:NZ03MY"
+          },
+          "expression": "(gb10y - gb03my) - (nz10y - nz03my)",
+          "name": "GB-NZ curve box"
+        },
+        {
+          "symbols": {
+            "UKX": "TVC:UKX",
+            "NZ50": "NZX_DLY:NZ50C"
+          },
+          "expression": "f_log(ukx) - f_log(nz50)",
+          "name": "UK-NZ equities"
+        },
+        {
+          "symbols": {
+            "FAGR": "LSE_DLY:FAGR",
+            "NBP": "ICEEUR:GWM1!",
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "f_log(fagr) - 0.5 * (f_log(nbp) + f_log(brent))",
+          "name": "Agriculture-UK energy"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "GBPCAD": {
+      "fxcm_model_symbol": "FX:GBPCAD",
+      "pine_sha256": "017363d218003fa0317e3b4eab2f887465151c33e7e9a17c107bab333222a26e",
+      "factors": [
+        {
+          "symbols": {
+            "GB03MY": "TVC:GB03MY",
+            "CA03MY": "TVC:CA03MY"
+          },
+          "expression": "gb03my - ca03my",
+          "name": "GB-CA 3M spread"
+        },
+        {
+          "symbols": {
+            "GB10Y": "TVC:GB10Y",
+            "GB03MY": "TVC:GB03MY",
+            "CA10Y": "TVC:CA10Y",
+            "CA03MY": "TVC:CA03MY"
+          },
+          "expression": "(gb10y - gb03my) - (ca10y - ca03my)",
+          "name": "GB-CA curve box"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "UKX": "TVC:UKX",
+            "TSX": "TSX:TSX"
+          },
+          "expression": "f_log(ukx) - f_log(tsx)",
+          "name": "UK-Canada equities"
+        },
+        {
+          "symbols": {
+            "WTI": "TVC:USOIL"
+          },
+          "expression": "f_log(wti)",
+          "name": "WTI"
+        },
+        {
+          "symbols": {
+            "NBP": "ICEEUR:GWM1!"
+          },
+          "expression": "f_log(nbp)",
+          "name": "NBP"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "GBPCHF": {
+      "fxcm_model_symbol": "FX:GBPCHF",
+      "pine_sha256": "0317109d6b1e42d0a0313f78617e98b4b22b89269d25d547542554f89288fbf6",
+      "factors": [
+        {
+          "symbols": {
+            "GB03MY": "TVC:GB03MY",
+            "CH06MY": "TVC:CH06MY"
+          },
+          "expression": "gb03my - ch06my",
+          "name": "GB-CH short spread"
+        },
+        {
+          "symbols": {
+            "GB10Y": "TVC:GB10Y",
+            "GB02Y": "TVC:GB02Y",
+            "CH10Y": "TVC:CH10Y",
+            "CH02Y": "TVC:CH02Y"
+          },
+          "expression": "(gb10y - gb02y) - (ch10y - ch02y)",
+          "name": "GB-CH curve box"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "GBPJPY": {
+      "fxcm_model_symbol": "FX:GBPJPY",
+      "pine_sha256": "d8d0b51dc28001845223229aed886947136e04159fcb78467edf56d9f667b729",
+      "factors": [
+        {
+          "symbols": {
+            "GB03MY": "TVC:GB03MY",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "gb03my - jp03my",
+          "name": "GB-JP 3M spread"
+        },
+        {
+          "symbols": {
+            "GB10Y": "TVC:GB10Y",
+            "GB03MY": "TVC:GB03MY",
+            "JP10Y": "TVC:JP10Y",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "(gb10y - gb03my) - (jp10y - jp03my)",
+          "name": "GB-JP curve box"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "AUDNZD": {
+      "fxcm_model_symbol": "FX:AUDNZD",
+      "pine_sha256": "4732dd0f8727da049c53c56b00555d942b377186375c2df40d455c635db45f20",
+      "factors": [
+        {
+          "symbols": {
+            "AU01Y": "TVC:AU01Y",
+            "NZ03MY": "TVC:NZ03MY"
+          },
+          "expression": "au01y - nz03my",
+          "name": "AU-NZ short spread"
+        },
+        {
+          "symbols": {
+            "AU10Y": "TVC:AU10Y",
+            "AU02Y": "TVC:AU02Y",
+            "NZ10Y": "TVC:NZ10Y",
+            "NZ02Y": "TVC:NZ02Y"
+          },
+          "expression": "(au10y - au02y) - (nz10y - nz02y)",
+          "name": "AU-NZ curve box"
+        },
+        {
+          "symbols": {
+            "IRON": "SGX:FEF1!",
+            "COAL": "ICEEUR:NCF1!",
+            "JKM": "NYMEX:JKM1!",
+            "WMP": "NZX_DLY:WMP1!"
+          },
+          "expression": "(f_log(iron) + f_log(coal) + f_log(jkm)) / 3.0 - f_log(wmp)",
+          "name": "Australia-WMP commodity terms"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "AUDCAD": {
+      "fxcm_model_symbol": "FX:AUDCAD",
+      "pine_sha256": "98b256719c0b1135b2071e4cd689a98ccf92509c9878086a3980b8946387d048",
+      "factors": [
+        {
+          "symbols": {
+            "AU01Y": "TVC:AU01Y",
+            "CA01Y": "TVC:CA01Y"
+          },
+          "expression": "au01y - ca01y",
+          "name": "AU-CA 1Y spread"
+        },
+        {
+          "symbols": {
+            "AU10Y": "TVC:AU10Y",
+            "AU01Y": "TVC:AU01Y",
+            "CA10Y": "TVC:CA10Y",
+            "CA01Y": "TVC:CA01Y"
+          },
+          "expression": "(au10y - au01y) - (ca10y - ca01y)",
+          "name": "AU-CA 10Y-1Y box"
+        },
+        {
+          "symbols": {
+            "IRON": "SGX:FEF1!",
+            "COAL": "ICEEUR:NCF1!",
+            "JKM": "NYMEX:JKM1!",
+            "WTI": "TVC:USOIL",
+            "COPPER": "COMEX:HG1!"
+          },
+          "expression": "(f_log(iron) + f_log(coal) + f_log(jkm)) / 3.0 - 0.5 * (f_log(wti) + f_log(copper))",
+          "name": "Australia-Canada commodities"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "AUDCHF": {
+      "fxcm_model_symbol": "FX:AUDCHF",
+      "pine_sha256": "617262363268b0040dc632f52005239f892da4a9b73edac2d869a0ed3382e4d1",
+      "factors": [
+        {
+          "symbols": {
+            "AU01Y": "TVC:AU01Y",
+            "CH06MY": "TVC:CH06MY"
+          },
+          "expression": "au01y - ch06my",
+          "name": "AU-CH short spread"
+        },
+        {
+          "symbols": {
+            "AU10Y": "TVC:AU10Y",
+            "AU01Y": "TVC:AU01Y",
+            "CH10Y": "TVC:CH10Y",
+            "CH06MY": "TVC:CH06MY"
+          },
+          "expression": "(au10y - au01y) - (ch10y - ch06my)",
+          "name": "AU-CH curve box"
+        },
+        {
+          "symbols": {
+            "XJO": "ASX_DLY:XJO",
+            "SMI": "SIX:SMI"
+          },
+          "expression": "f_log(xjo) - f_log(smi)",
+          "name": "Australia-Switzerland equities"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "NZDCAD": {
+      "fxcm_model_symbol": "FX:NZDCAD",
+      "pine_sha256": "da2fecc13042d94f3088640eaae3b4d7ae1714e4e93256427c562b6672e949fb",
+      "factors": [
+        {
+          "symbols": {
+            "NZ03MY": "TVC:NZ03MY",
+            "CA03MY": "TVC:CA03MY"
+          },
+          "expression": "nz03my - ca03my",
+          "name": "NZ-CA 3M spread"
+        },
+        {
+          "symbols": {
+            "NZ10Y": "TVC:NZ10Y",
+            "NZ02Y": "TVC:NZ02Y",
+            "CA10Y": "TVC:CA10Y",
+            "CA02Y": "TVC:CA02Y"
+          },
+          "expression": "(nz10y - nz02y) - (ca10y - ca02y)",
+          "name": "NZ-CA 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "VPL": "BATS:VPL",
+            "SPX": "TVC:SPX"
+          },
+          "expression": "f_log(vpl) - f_log(spx)",
+          "name": "Asia-Pacific-US equities"
+        },
+        {
+          "symbols": {
+            "FAGR": "LSE_DLY:FAGR",
+            "WTI": "TVC:USOIL",
+            "COPPER": "COMEX:HG1!"
+          },
+          "expression": "f_log(fagr) - 0.5 * (f_log(wti) + f_log(copper))",
+          "name": "Agriculture-Canada commodities"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "NZDCHF": {
+      "fxcm_model_symbol": "FX:NZDCHF",
+      "pine_sha256": "e3233138268a3b4a1b5365bccb3ae2268d078e216c2387189aef3359b69249ff",
+      "factors": [
+        {
+          "symbols": {
+            "NZ02Y": "TVC:NZ02Y",
+            "CH02Y": "TVC:CH02Y"
+          },
+          "expression": "nz02y - ch02y",
+          "name": "NZ-CH 2Y spread"
+        },
+        {
+          "symbols": {
+            "NZ10Y": "TVC:NZ10Y",
+            "NZ03MY": "TVC:NZ03MY",
+            "CH10Y": "TVC:CH10Y",
+            "CH06MY": "TVC:CH06MY"
+          },
+          "expression": "(nz10y - nz03my) - (ch10y - ch06my)",
+          "name": "NZ-CH curve box"
+        },
+        {
+          "symbols": {
+            "NZ50": "NZX_DLY:NZ50C",
+            "SMI": "SIX:SMI"
+          },
+          "expression": "f_log(nz50) - f_log(smi)",
+          "name": "NZ-Switzerland equities"
+        },
+        {
+          "symbols": {
+            "FAGR": "LSE_DLY:FAGR"
+          },
+          "expression": "f_log(fagr)",
+          "name": "Agriculture"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "NZDJPY": {
+      "fxcm_model_symbol": "FX:NZDJPY",
+      "pine_sha256": "1c654a3ab0179720be8c3eaba9c7ecd01a9f81af76acd318e239759ac2ba120f",
+      "factors": [
+        {
+          "symbols": {
+            "NZ03MY": "TVC:NZ03MY",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "nz03my - jp03my",
+          "name": "NZ-JP 3M spread"
+        },
+        {
+          "symbols": {
+            "NZ10Y": "TVC:NZ10Y",
+            "NZ02Y": "TVC:NZ02Y",
+            "JP10Y": "TVC:JP10Y",
+            "JP02Y": "TVC:JP02Y"
+          },
+          "expression": "(nz10y - nz02y) - (jp10y - jp02y)",
+          "name": "NZ-JP 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "URTH": "BATS:URTH"
+          },
+          "expression": "f_log(urth)",
+          "name": "Global equities"
+        },
+        {
+          "symbols": {
+            "FAGR": "LSE_DLY:FAGR",
+            "BRENT": "TVC:UKOIL",
+            "JKM": "NYMEX:JKM1!",
+            "COAL": "ICEEUR:NCF1!"
+          },
+          "expression": "f_log(fagr) - (f_log(brent) + f_log(jkm) + f_log(coal)) / 3.0",
+          "name": "Agriculture-Japan energy"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "CADCHF": {
+      "fxcm_model_symbol": "FX:CADCHF",
+      "pine_sha256": "de3cd03f5a9654c619e84ab9fe2f871a8fa667c792939ea3edb32b623c575421",
+      "factors": [
+        {
+          "symbols": {
+            "CA01Y": "TVC:CA01Y",
+            "CH01Y": "TVC:CH01Y"
+          },
+          "expression": "ca01y - ch01y",
+          "name": "CA-CH 1Y spread"
+        },
+        {
+          "symbols": {
+            "CA10Y": "TVC:CA10Y",
+            "CA02Y": "TVC:CA02Y",
+            "CH10Y": "TVC:CH10Y",
+            "CH02Y": "TVC:CH02Y"
+          },
+          "expression": "(ca10y - ca02y) - (ch10y - ch02y)",
+          "name": "CA-CH 10Y-2Y box"
+        },
+        {
+          "symbols": {
+            "WTI": "TVC:USOIL",
+            "COPPER": "COMEX:HG1!"
+          },
+          "expression": "0.5 * (f_log(wti) + f_log(copper))",
+          "name": "Canada commodity basket"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "CADJPY": {
+      "fxcm_model_symbol": "FX:CADJPY",
+      "pine_sha256": "916bd2a419ec6e1c130867d16c1cdfb633ef2cb2846850e2b25569f1877414a2",
+      "factors": [
+        {
+          "symbols": {
+            "CA03MY": "TVC:CA03MY",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "ca03my - jp03my",
+          "name": "CA-JP 3M spread"
+        },
+        {
+          "symbols": {
+            "CA10Y": "TVC:CA10Y",
+            "CA03MY": "TVC:CA03MY",
+            "JP10Y": "TVC:JP10Y",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "(ca10y - ca03my) - (jp10y - jp03my)",
+          "name": "CA-JP curve box"
+        },
+        {
+          "symbols": {
+            "NI225": "TVC:NI225"
+          },
+          "expression": "f_log(ni225)",
+          "name": "Japan equities"
+        },
+        {
+          "symbols": {
+            "WTI": "TVC:USOIL",
+            "COPPER": "COMEX:HG1!",
+            "JKM": "NYMEX:JKM1!",
+            "COAL": "ICEEUR:NCF1!",
+            "BRENT": "TVC:UKOIL"
+          },
+          "expression": "0.5 * (f_log(wti) + f_log(copper)) - (f_log(jkm) + f_log(coal) + f_log(brent)) / 3.0",
+          "name": "Canada-Japan commodity terms"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    },
+    "CHFJPY": {
+      "fxcm_model_symbol": "FX:CHFJPY",
+      "pine_sha256": "9e027151ab397643c794f3d03e999b10d3c91a09fdbc505626d3dcc08f96c60d",
+      "factors": [
+        {
+          "symbols": {
+            "CH06MY": "TVC:CH06MY",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "ch06my - jp03my",
+          "name": "CH-JP short spread"
+        },
+        {
+          "symbols": {
+            "CH10Y": "TVC:CH10Y",
+            "CH06MY": "TVC:CH06MY",
+            "JP10Y": "TVC:JP10Y",
+            "JP03MY": "TVC:JP03MY"
+          },
+          "expression": "(ch10y - ch06my) - (jp10y - jp03my)",
+          "name": "CH-JP curve box"
+        },
+        {
+          "symbols": {
+            "SMI": "SIX:SMI",
+            "NI225": "TVC:NI225"
+          },
+          "expression": "f_log(smi) - f_log(ni225)",
+          "name": "Switzerland-Japan equities"
+        },
+        {
+          "symbols": {
+            "BRENT": "TVC:UKOIL",
+            "JKM": "NYMEX:JKM1!",
+            "COAL": "ICEEUR:NCF1!"
+          },
+          "expression": "f_log(brent) - 0.5 * (f_log(jkm) + f_log(coal))",
+          "name": "Brent-Japan energy"
+        }
+      ],
+      "allow_longs": true,
+      "allow_shorts": true
+    }
+  }
+}
