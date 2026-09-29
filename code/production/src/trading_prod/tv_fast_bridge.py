@@ -50,7 +50,7 @@ class FXQuote:
 
 
 def fetch_live_fxcm_quotes(*, client, timeout_seconds: float = 8.0,
-                           now: Callable[[], float] = time.time,
+                           now: Callable[[], float] | None = None,
                            sleeper: Callable[[float], None] = time.sleep) -> dict[str, FXQuote]:
     """Read 31 existing frozen FXCM model-spot symbols; no bar persistence.
 
@@ -58,6 +58,7 @@ def fetch_live_fxcm_quotes(*, client, timeout_seconds: float = 8.0,
     tests. A chart is deleted after every request. Avoid logging credentials,
     raw bars, symbols' price levels, or licensed responses.
     """
+    now = now or time.time
     result: dict[str, FXQuote] = {}
     for pair in FROZEN_PAIRS:
         chart = client.Session.Chart()
