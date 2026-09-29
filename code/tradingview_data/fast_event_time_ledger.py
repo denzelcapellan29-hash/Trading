@@ -95,7 +95,9 @@ def ingest_snapshot(con: sqlite3.Connection, *, observed_epoch: float, source: s
             if start in seen:raise UnsafeSource('duplicate source bar')
             seen.add(start)
             prices={k:_number(bar.get(k),k,nullable=k!='close') for k in ('open','high','low','close','volume')}
-            if prices['close']<=0:raise UnsafeSource('nonpositive close')
+            if symbol.startswith('FX:') and prices['close']<=0:
+                raise UnsafeSource('nonpositive FX model spot')
+            # Some valid frozen factor series are signed: rates/spreads may be <= 0.
             version=_hash([symbol,tf,start,prices])
             records.append((symbol,tf,start,prices,version))
     payload=[(s,tf,t,px,h) for s,tf,t,px,h in records]
