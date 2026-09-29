@@ -1,0 +1,31 @@
+name: FAST Missing-Input Targeted Probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/tv-python-ibkr-shadow-bridge]
+    paths:
+      - '.github/workflows/fast-input-gap-probe.yml'
+permissions:
+  contents: read
+jobs:
+  targeted-source-gaps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test exact frozen signal core, diagnostic, broker boundary
+        working-directory: code/production
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[equity]'
+          python -m unittest discover -s tests -q
+      - name: Diagnose actual authorized daily/weekly missing source windows, no raw bars
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: |
+          python -m pip install --disable-pip-version-check tradingview-api-python
+          python tools/fast_missing_inputs_probe.py
