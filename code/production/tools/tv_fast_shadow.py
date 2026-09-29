@@ -48,11 +48,6 @@ def main(argv=None) -> int:
     signature = os.environ.get("SESSIONID_SIGN") or os.environ.get("TV_SESSIONID_SIGN")
     if not sid or not signature:
         raise DataBlocked("AUTHORIZED_TRADINGVIEW_SESSION_REQUIRED")
-    try:
-        from tradingviewApiPython import Client
-    except ImportError as exc:
-        raise DataBlocked("INSTALL_TRADINGVIEW_API_PYTHON") from exc
-
     # Pre-flight shadow constraints BEFORE retrieving anything.
     if not args.coverage_only:
         config = load_config(args.config)
@@ -62,6 +57,10 @@ def main(argv=None) -> int:
         validate_fast_shadow_targets(signals, now_epoch=time.time())
         if args.nav <= 0:
             raise DataBlocked("SIMULATED_NAV_MUST_BE_POSITIVE")
+    try:
+        from tradingviewApiPython import Client
+    except ImportError as exc:
+        raise DataBlocked("INSTALL_TRADINGVIEW_API_PYTHON") from exc
     client = Client(token=sid, signature=signature)
     try:
         quotes = fetch_live_fxcm_quotes(client=client)
