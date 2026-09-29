@@ -25,7 +25,7 @@ def load_api(path):
     with zipfile.ZipFile(path) as z:
         for name in z.namelist():
             if not name.endswith('_D.csv'):continue
-            key=Path(name).stem.removesuffix('_D')
+            key=Path(name).stem.removesuffix('_D').rstrip('_')
             df=pd.read_csv(io.BytesIO(z.read(name)))[['time','close']]
             df=df.dropna().sort_values('time').drop_duplicates('time')
             data[key]=df
