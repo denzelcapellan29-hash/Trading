@@ -5,6 +5,9 @@ on:
     branches: [production/fx-fast-api-input-gate]
     paths:
       - '.github/workflows/fast-event-time-capture.yml'
+      - 'code/tradingview_data/fast_event_time_ledger.py'
+      - 'code/tradingview_data/test_event_time_ledger.py'
+      - 'code/tradingview_data/capture_fast_source_snapshot.py'
 permissions:
   contents: read
 jobs:
