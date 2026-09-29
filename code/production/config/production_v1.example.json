@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "execution_mode": "SHADOW",
+  "transmit_orders": false,
+  "account": {
+    "base_currency": "USD",
+    "account_id": "REPLACE_WITH_IBKR_ACCOUNT_ID",
+    "expected_account_type": "PAPER"
+  },
+  "broker": {
+    "provider": "IBKR_TWS",
+    "host": "127.0.0.1",
+    "paper_port": 4002,
+    "live_port": 4001,
+    "client_id": 29,
+    "connect_timeout_seconds": 20,
+    "snapshot_timeout_seconds": 20
+  },
+  "portfolio": {
+    "equity_sleeve_weight": 0.50,
+    "fx_sleeve_weight": 0.50,
+    "fx_sleeve_leverage": 1.0,
+    "strategies": {
+      "MOMENTUM_BARBELL": {"account_weight": 0.20, "enabled": true},
+      "AGREEMENT_REVERSION": {"account_weight": 0.10, "enabled": true},
+      "PCA_STATARB_8910": {"account_weight": 0.10, "enabled": true},
+      "CORRIDOR_ACCEPT": {"account_weight": 0.10, "enabled": true},
+      "FAST_31PAIR_PRODUCTION": {"account_weight": 0.325, "enabled": true},
+      "FX_ALT_RM": {
+        "account_weight": 0.175,
+        "enabled": false,
+        "shadow_only_until": "ALT upstream candidate-generation parity closes"
+      },
+      "EQUITY_PUT_OVERLAY": {
+        "account_weight": 0.0,
+        "enabled": false,
+        "shadow_only_until": "tradable put implementation is frozen"
+      }
+    }
+  },
+  "risk": {
+    "kill_switch_file": "./state/KILL_SWITCH",
+    "max_signal_age_seconds": null,
+    "max_total_gross_nav": null,
+    "max_net_single_currency_nav": null,
+    "max_single_order_notional_nav": null,
+    "min_order_notional_account_ccy": 25.0,
+    "position_unit_tolerance": 1e-8,
+    "hard_limits_status": "DECISION_REQUIRED_BEFORE_LIVE"
+  },
+  "state": {"sqlite_path": "./state/trading_prod.sqlite3"},
+  "orders": {
+    "default_order_type": "MKT",
+    "default_tif": "DAY",
+    "outside_rth": false
+  }
+}
