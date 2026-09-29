@@ -15,15 +15,35 @@ from pathlib import Path
 from tradingviewApiPython import Client
 
 CASES = [
-    ("OANDA:EURUSD", "W", 100),
-    ("OANDA:EURUSD", "120", 100),
-    ("OANDA:XAUUSD", "D", 100),
-    ("COMEX:GC1!", "W", 100),
-    ("AMEX:PALL", "W", 100),
-]
-OUTPUT = Path("artifacts/tradingview_smoke")
+  [
+    "OANDA:EURUSD",
+    "W",
+    1500
+  ],
+  [
+    "OANDA:EURUSD",
+    "D",
+    6000
+  ],
+  [
+    "OANDA:EURUSD",
+    "120",
+    50000
+  ],
+  [
+    "AMEX:PALL",
+    "W",
+    1000
+  ],
+  [
+    "COMEX:GC1!",
+    "W",
+    1500
+  ]
+] 
+OUTPUT = Path("artifacts/tradingview_depth")
 OUTPUT.mkdir(parents=True, exist_ok=True)
-TIMEOUT_SECONDS = 35
+TIMEOUT_SECONDS = 90
 
 def scrub_bar(bar):
     if not isinstance(bar, dict):
