@@ -113,6 +113,16 @@ def derive_current_signals(config,charts,observed_epoch):
             last=states[-1]
             if observed_epoch-last.signal_week_end_epoch>8*86400:
                 raise SignalBlocked('STALE_FROZEN_MODEL_WEEK')
+            # A blocked EG or an incomplete factor regression is UNKNOWN,
+            # not a genuine no-signal observation; do not count it as flat.
+            if not last.eg63_available:
+                raise SignalBlocked('LATEST_EG63_UNAVAILABLE')
+            if not math.isfinite(last.primary_z):
+                raise SignalBlocked('LATEST_PRIMARY_MODEL_INCOMPLETE')
+            if not math.isfinite(last.vol13_ann) or last.vol_regime==0:
+                raise SignalBlocked('LATEST_SPOT_VOL_REGIME_INCOMPLETE')
+            if not last.eg63_stable and not math.isfinite(last.secondary_z):
+                raise SignalBlocked('LATEST_SECONDARY_MODEL_INCOMPLETE')
             results[pair]={
                 'model_week_end_utc':datetime.fromtimestamp(last.signal_week_end_epoch,timezone.utc).isoformat(),
                 'direction':last.direction,'branch':last.branch,
@@ -165,6 +175,9 @@ def main(argv=None):
         summary={'freeze_id':c['freeze_id'],'capture_utc':datetime.fromtimestamp(observed,timezone.utc).isoformat(),
                  'captured_surface_count':len(charts),'expected':194,
                  'diagnostic_pair_count':len(results),'blocked_pairs':blocked,
+                 'eg63_available_count':sum(x['eg63_available'] for x in results.values()),
+                 'eg126_available_count':sum(x['eg126_available'] for x in results.values()),
+                 'eligible_model_state_count':len(results),
                  'retrospective_direction_counts':{str(k):sum(x['direction']==k for x in results.values()) for k in (-1,0,1)},
                  'signals':results,
                  'status':'SHADOW_RETROSPECTIVE_DIAGNOSTIC_ONLY_NOT_MON_cutoff_CERTIFIED',
