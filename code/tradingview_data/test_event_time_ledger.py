@@ -51,7 +51,7 @@ class EventTimeTests(unittest.TestCase):
             issued_epoch=self.first+1,source='calendar-attestor',evidence_id='test-close-1')
         before=self.select(at=self.first)
         self.assertEqual(before['start_epoch'],self.oldstart)
-        after=self.select()
+        after=self.select(at=self.now+1)
         self.assertEqual(after['start_epoch'],self.newstart)
         self.assertTrue(after['proof'].startswith('VERIFIED_CALENDAR:'))
     def test_005_reject_bad_or_future_certificate(self):
@@ -73,6 +73,21 @@ class EventTimeTests(unittest.TestCase):
         r=select_completed(self.db,symbol='TEST:ABC',timeframe='W',
                            cutoff_epoch=self.decision,max_age_seconds=60)
         self.assertEqual(r['reason'],'STALE_COMPLETED_SOURCE')
+    def test_010_old_import_is_not_fresh_even_if_observed_now(self):
+        old_a=self.now-42*86400;old_b=self.now-35*86400
+        ingest_snapshot(self.db,observed_epoch=self.first,source='archive-ingestion',
+            series={('TEST:OLD','W'):[{'time':old_a,'close':100},
+                     {'time':old_b,'close':101}]})
+        result=select_completed(self.db,symbol='TEST:OLD',timeframe='W',
+            cutoff_epoch=self.decision,max_age_seconds=12*86400)
+        self.assertEqual(result['reason'],'STALE_COMPLETED_SOURCE')
+    def test_011_certificate_insertion_not_retroactively_visible(self):
+        self.feed()
+        certify_calendar_close(self.db,symbol='TEST:ABC',timeframe='W',
+           bar_start_epoch=self.newstart,verified_close_epoch=self.first-5,
+           issued_epoch=self.first+1,source='calendar-attestor',evidence_id='late-backdate')
+        self.assertEqual(self.select()['start_epoch'],self.oldstart)
+        self.assertEqual(self.select(self.now+1)['start_epoch'],self.newstart)
     def test_009_signed_macro_factor_but_positive_fx_spot(self):
         row={'time':self.oldstart,'close':-0.25}
         ingest_snapshot(self.db,observed_epoch=self.first,source='signed-source',
@@ -86,6 +101,6 @@ class EventTimeTests(unittest.TestCase):
             bar_start_epoch=self.newstart,verified_close_epoch=self.first-5,
             issued_epoch=self.now-100,source='calendar-attestor',evidence_id='late')
         self.assertEqual(self.select()['start_epoch'],self.oldstart)
-        self.assertEqual(self.select(self.now-60)['start_epoch'],self.newstart)
+        self.assertEqual(self.select(self.now+1)['start_epoch'],self.newstart)
 
 if __name__=='__main__':unittest.main(verbosity=2)
