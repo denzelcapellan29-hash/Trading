@@ -5,6 +5,8 @@ on:
     branches: [production/fx-fast-api-input-gate]
     paths:
       - '.github/workflows/fast-event-time-capture.yml'
+      - 'code/tradingview_data/fast_drive_archive.py'
+      - 'code/tradingview_data/test_drive_oauth_diagnostics.py'
 # The research branch cannot receive GitHub scheduled events until merged;
 # do NOT merge merely to schedule it. Use explicit Monday workflow_dispatch
 # until the release owner authorizes a branch scheduling/deployment decision.
@@ -31,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for name in test_event_time_ledger test_source_continuity test_monday_cutoff test_fast_drive_archive; do
+          for name in test_event_time_ledger test_source_continuity test_monday_cutoff test_fast_drive_archive test_drive_oauth_diagnostics; do
             PYTHONPATH=code/tradingview_data python -m unittest -v "$name"
           done
       - name: Restore permanent Drive archive, or research-only rolling GH predecessor
