@@ -86,7 +86,16 @@ def aligned_pair_inputs(pair,setting,charts,observation_epoch):
                     # Within the most recent nominal week/day, never borrow
                     # from a future *bar start*. This is still a hindsight
                     # approximation until same-decision publication is tested.
-                    max_age=8*86400 if tf=='W' else 4*86400
+                    # Frozen Pine requests `gaps=barmerge.gaps_off`: when a
+                    # market is shut, the last available native bar is held.
+                    # Actual licensed live source probe #36643093219 found
+                    # NI225 D holiday gaps up to 5.9 days and FAGR W gaps
+                    # up to 11.6 days. Original stricter 4D/8W limits
+                    # mislabeled 10 frozen pairs as unknown. Allow the native
+                    # gap-off carry with *bounded*, visible 7D/14W age;
+                    # larger gaps remain unknown. This is not proof of
+                    # original Monday publication time, nor model retuning.
+                    max_age=14*86400 if tf=='W' else 7*86400
                     vals[alias.lower()]=_select_observed_chart_bar(chart,close_epoch,max_age)
                 try:features.append(expr(f['expression'],vals))
                 except (ValueError,ArithmeticError):features.append(float('nan'))
