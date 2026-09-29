@@ -77,8 +77,8 @@ def save(symbol, timeframe, bars):
     return file.as_posix()
 
 def main():
-    token = os.getenv("TV_SESSIONID")
-    signature = os.getenv("TV_SESSIONID_SIGN")
+    token = os.getenv("SESSIONID")
+    signature = os.getenv("SESSIONID_SIGN")
     if not token or not signature:
         print("Missing expected TradingView Actions secrets.", file=sys.stderr)
         return 2
