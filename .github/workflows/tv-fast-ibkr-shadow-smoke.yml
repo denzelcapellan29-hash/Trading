@@ -1,0 +1,40 @@
+name: TV to Python to IBKR Shadow Integration Gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/tv-python-ibkr-shadow-bridge]
+    paths:
+      - '.github/workflows/tv-fast-ibkr-shadow-smoke.yml'
+      - 'code/production/src/trading_prod/tv_fast_bridge.py'
+      - 'code/production/tools/tv_fast_shadow.py'
+      - 'code/production/tests/test_tv_fast_bridge.py'
+# This is an isolated read-only smoke; no IBKR account credentials or orders.
+permissions:
+  contents: read
+jobs:
+  read-only-shadow-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run existing broker engine and new bridge regressions offline
+        working-directory: code/production
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[equity]'
+          python -m unittest discover -s tests -v
+      - name: Probe CURRENT TradingView frozen 31 FXCM quotes read-only
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SESSIONID:-}" ] || [ -z "${SESSIONID_SIGN:-}" ]; then
+            echo 'BLOCK: existing authenticated TradingView research secrets unavailable' >&2
+            exit 4
+          fi
+          python -m pip install --disable-pip-version-check tradingview-api-python
+          python tools/tv_fast_shadow.py --coverage-only
