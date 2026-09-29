@@ -17,6 +17,7 @@ import hashlib
 import json
 import math
 import sqlite3
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
@@ -38,7 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_bars ON observations(symbol,timeframe,bar_start_e
 CREATE TABLE IF NOT EXISTS close_certificates (
  certificate_id TEXT PRIMARY KEY, symbol TEXT NOT NULL, timeframe TEXT NOT NULL,
  bar_start_epoch REAL NOT NULL, verified_close_epoch REAL NOT NULL,
- issued_epoch REAL NOT NULL, source TEXT NOT NULL, evidence_id TEXT NOT NULL,
+ issued_epoch REAL NOT NULL, recorded_epoch REAL NOT NULL, source TEXT NOT NULL, evidence_id TEXT NOT NULL,
  CHECK (verified_close_epoch > bar_start_epoch),
  CHECK (issued_epoch >= verified_close_epoch)
 );
@@ -128,9 +129,10 @@ def certify_calendar_close(con, *, symbol: str, timeframe: str, bar_start_epoch:
     start=_number(bar_start_epoch,'bar_start_epoch');close=_number(verified_close_epoch,'verified_close_epoch')
     issued=_number(issued_epoch,'issued_epoch');now=datetime.now(timezone.utc).timestamp()
     if start>=close or issued<close or issued>now+10:raise UnsafeSource('invalid close certification chronology')
+    recorded=time.time()  # trusted insertion time, NEVER user backdated
     key=_hash([symbol,timeframe,start,close,issued,source,evidence_id])
-    with con:con.execute('INSERT OR IGNORE INTO close_certificates VALUES (?,?,?,?,?,?,?,?)',
-                       (key,symbol,timeframe,start,close,issued,source,evidence_id))
+    with con:con.execute('INSERT OR IGNORE INTO close_certificates VALUES (?,?,?,?,?,?,?,?,?)',
+                       (key,symbol,timeframe,start,close,issued,recorded,source,evidence_id))
     return key
 
 def select_completed(con, *, symbol: str, timeframe: str, cutoff_epoch: float,
@@ -155,31 +157,35 @@ def select_completed(con, *, symbol: str, timeframe: str, cutoff_epoch: float,
     eligible=[]
     for i,b in enumerate(bars):
         # Next bar must itself have been observed at/before the decision cutoff.
-        next_start=bars[i+1]['bar_start_epoch'] if i+1<len(bars) else None
-        cert=con.execute('''SELECT certificate_id,verified_close_epoch,issued_epoch,source FROM close_certificates
-            WHERE symbol=? AND timeframe=? AND bar_start_epoch=? AND issued_epoch<=? AND verified_close_epoch<=?
+        successor=bars[i+1] if i+1<len(bars) else None
+        next_start=successor['bar_start_epoch'] if successor is not None else None
+        cert=con.execute('''SELECT certificate_id,verified_close_epoch,issued_epoch,recorded_epoch,source FROM close_certificates
+            WHERE symbol=? AND timeframe=? AND bar_start_epoch=? AND recorded_epoch<=? AND issued_epoch<=? AND verified_close_epoch<=?
             ORDER BY verified_close_epoch,issued_epoch LIMIT 1''',
-            (symbol,timeframe,b['bar_start_epoch'],cutoff,cutoff)).fetchone()
+            (symbol,timeframe,b['bar_start_epoch'],cutoff,cutoff,cutoff)).fetchone()
         if next_start is not None and next_start<=cutoff:
-            completed_at=max(next_start,b['observed_epoch'])
+            economic_close=next_start  # lower-bound completion proof, not last trade timestamp
+            known_at=max(b['observed_epoch'],successor['observed_epoch'])
             proof='NEXT_BAR_OBSERVED'
         elif cert:
-            completed_at=max(cert['verified_close_epoch'],cert['issued_epoch'],b['observed_epoch'])
+            economic_close=cert['verified_close_epoch']
+            known_at=max(cert['recorded_epoch'],cert['issued_epoch'],b['observed_epoch'])
             proof='VERIFIED_CALENDAR:'+cert['certificate_id']
         else:continue
-        if completed_at>cutoff:continue
-        eligible.append((b,proof,completed_at))
+        if known_at>cutoff:continue
+        eligible.append((b,proof,economic_close,known_at))
     if len(eligible)<min_history:return {'status':'BLOCK','reason':'INSUFFICIENT_PROVEN_COMPLETE_HISTORY',
                                          'symbol':symbol,'timeframe':timeframe,'available':len(eligible)}
-    b,proof,completed_at=eligible[-1]
-    age=cutoff-completed_at
+    b,proof,economic_close,known_at=eligible[-1]
+    age=cutoff-economic_close
     if age>age_limit:return {'status':'BLOCK','reason':'STALE_COMPLETED_SOURCE',
                              'symbol':symbol,'timeframe':timeframe,'age_seconds':age}
     return {'status':'OK','reason':'CAUSALLY_PROVEN_COMPLETED',
             'symbol':symbol,'timeframe':timeframe,'start_epoch':b['bar_start_epoch'],
             'close':b['close'],'version_sha256':b['version_sha256'],
             'batch_id':b['batch_id'],'first_observed_no_later_than':b['observed_epoch'],
-            'completed_epoch':completed_at,'age_seconds':age,'proof':proof,
+            'economic_completed_epoch':economic_close,'completion_proven_asof_epoch':known_at,
+            'age_seconds':age,'proof':proof,
             'history_proven_count':len(eligible)}
 
 def decide(con, *, decision_id: str, symbols: Iterable[str], timeframe: str,
