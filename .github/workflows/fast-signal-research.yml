@@ -5,6 +5,11 @@ on:
     branches: [production/tv-python-ibkr-shadow-bridge]
     paths:
       - '.github/workflows/fast-signal-research.yml'
+      - 'code/production/tools/fast_live_signal_diagnostic.py'
+      - 'code/production/src/trading_prod/fast_frozen_signal_core.py'
+      - 'code/production/tools/frozen_fast_pair_inputs.json'
+      - 'code/production/tests/test_fast_live_signal_diagnostic.py'
+      - 'code/production/tests/test_fast_frozen_signal_core.py'
 permissions:
   contents: read
 jobs:
