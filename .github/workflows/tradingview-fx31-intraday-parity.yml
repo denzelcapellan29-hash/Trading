@@ -1,0 +1,31 @@
+name: TradingView FX 31-Pair Intraday Parity Capture
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tradingview-fx31-intraday-parity.yml'
+permissions:
+  contents: read
+jobs:
+  intraday:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Fetch 31 pairs at 2h for overlapping parity window
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python code/tradingview_data/fx31_2h_parity_capture.py
+      - name: Retain intraday samples and metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tradingview-fx31-2h-parity
+          path: artifacts/tradingview_fx31_2h/
+          retention-days: 7
