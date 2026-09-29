@@ -1,0 +1,85 @@
+{
+  "state": "SHADOW_DURABLE_SEEDED_OAUTH_INVALID_CLIENT",
+  "freeze_id": "FX-FAST-2026-08-28",
+  "branch": "production/fx-fast-api-input-gate",
+  "pull_request": 3,
+  "merged": false,
+  "orders_enabled": false,
+  "params_changed": false,
+  "verified_utc": "2026-09-29T16:46:44.169873Z",
+  "latest_verified_github_action": {
+    "run_id": 36600043914,
+    "head_commit": "80c140f62ba9be5804d0d551d06c948ee49aa958",
+    "artifact_id": 11049132633,
+    "artifact_zip_digest_sha256": "72107405768e4cc61b36c01228adbf12e462d862028f2586a549168529b21076",
+    "github_only_rolling": true,
+    "tests_passed": 31,
+    "required_series_captured": 194,
+    "required_series_fresh_on_tuesday_at_runner": 194
+  },
+  "full_cumulative_sqlite": {
+    "sha256": "227923668749f6fb298f376e9ff2d36faf5a40d8fd1a1fc669a08e48aec04644",
+    "observed_batches": 3,
+    "versioned_rows": 104760,
+    "distinct_series": 194
+  },
+  "durable_drive_archive": {
+    "folder_id": "1vFLUWUZyufqeSnquR7sI00fu0nWYkMiO",
+    "segments": [
+      {
+        "sequence": 0,
+        "batches_after": 2,
+        "kind": "seed",
+        "sha256": "774d6ddb68969f1ceb8471e9d6bd4674dc149f561e2f8198d335fde2b5178825",
+        "file_id": "14UFIoVtavMvS-6pHW9NesbKxJVOuA2oA"
+      },
+      {
+        "sequence": 1,
+        "batches_after": 3,
+        "kind": "incremental",
+        "parent_sha256": "774d6ddb68969f1ceb8471e9d6bd4674dc149f561e2f8198d335fde2b5178825",
+        "sha256": "a1759e6dac99d940718387d0ad283eb07352509468b2e4bd9444355d76b259be",
+        "file_id": "1u-6-eJx4SFpi9vFcqGVxN3zslffZEpGq"
+      }
+    ],
+    "verified_download_checksums": true,
+    "logical_reconstruction_equal_to_github": true,
+    "automatic_github_drive_oauth_verified": false
+  },
+  "source_permissions": "TradingView authenticated read-only chart API, user-authorized; no licensed source payload in public repository",
+  "preserved_previous_evidence": {
+    "spot_OANDA_2H_OHLC_overlap": 16616,
+    "spot_OANDA_overlap_matches": 16616,
+    "allocator_archived_candidate_count": 2744,
+    "allocator_archived_weekly_cohorts": 948,
+    "retrospective_signals_matches": 103,
+    "retrospective_signals_total": 108,
+    "EG63_flags_matches": 34,
+    "EG63_flags_total": 39,
+    "EG_retrospective_not_production": true
+  },
+  "open_gates": [
+    "github_actions_google_oauth_invalid_client_user_credential_correction",
+    "actual_monday_0900_london_pre_post_not_observed",
+    "source_exchange_calendar_proof",
+    "per_source_fetch_asof_when_run_overlaps_cutoff",
+    "nested_pine_security_parity",
+    "live_asof_31_pair_EG_confidence_entry_candidate_allocator_parity",
+    "broker_risk_orders_not_authorized"
+  ],
+  "one_next_executable_task": "After user corrects matching OAuth client ID/secret (and refresh token if issued to different client) in GitHub Secrets, trigger read-only research-branch workflow and verify actual Drive restore, 194-source capture, delta upload/readback into 4-batch archive.",
+  "oauth_connectivity_test": {
+    "status": "BLOCK_GOOGLE_INVALID_CLIENT",
+    "github_run_id": 36635583412,
+    "branch_head": "057f0a5a9c485cb2425bfe09b25267432a42aec7",
+    "tests_passed": 37,
+    "configured_four_settings_reached_oauth": true,
+    "google_sanitized_error": "invalid_client",
+    "remote_archive_restored": false,
+    "new_capture_performed": false,
+    "remote_delta_published": false,
+    "archive_prefix_still_three_batches": true,
+    "no_secrets_logged": true,
+    "initial_failed_run_attempt": "36600043914/attempts/2"
+  }
+}

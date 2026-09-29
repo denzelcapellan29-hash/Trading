@@ -1,0 +1,31 @@
+name: Frozen FAST Holiday Source-Cutoff Probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/fx-fast-api-input-gate]
+    paths:
+      - '.github/workflows/fast-holiday-source-cutoff.yml'
+      - 'code/tradingview_data/fast_source_cutoff_probe.py'
+permissions:
+  contents: read
+jobs:
+  cutoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Capture daily timestamps around holiday cutoffs
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python code/tradingview_data/fast_source_cutoff_probe.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast-holiday-cutoff-daily
+          path: artifacts/fast_source_cutoff/
+          retention-days: 7
