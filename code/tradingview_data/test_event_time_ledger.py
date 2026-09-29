@@ -73,6 +73,13 @@ class EventTimeTests(unittest.TestCase):
         r=select_completed(self.db,symbol='TEST:ABC',timeframe='W',
                            cutoff_epoch=self.decision,max_age_seconds=60)
         self.assertEqual(r['reason'],'STALE_COMPLETED_SOURCE')
+    def test_009_signed_macro_factor_but_positive_fx_spot(self):
+        row={'time':self.oldstart,'close':-0.25}
+        ingest_snapshot(self.db,observed_epoch=self.first,source='signed-source',
+              series={('TVC:BTPBUND','W'):[row]})
+        with self.assertRaises(UnsafeSource):
+            ingest_snapshot(self.db,observed_epoch=self.first,source='signed-source',
+                series={('FX:EURUSD','W'):[row]})
     def test_008_no_hindsight_certificate(self):
         self.feed()
         certify_calendar_close(self.db,symbol='TEST:ABC',timeframe='W',
