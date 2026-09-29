@@ -1,5 +1,5 @@
 {
-  "state": "SHADOW_DURABLE_SEEDED_BUT_UNATTENDED_OAUTH_NOT_CONFIGURED",
+  "state": "SHADOW_DURABLE_SEEDED_OAUTH_INVALID_CLIENT",
   "freeze_id": "FX-FAST-2026-08-28",
   "branch": "production/fx-fast-api-input-gate",
   "pull_request": 3,
@@ -59,7 +59,7 @@
     "EG_retrospective_not_production": true
   },
   "open_gates": [
-    "github_actions_offline_oauth_not_configured",
+    "github_actions_google_oauth_invalid_client_user_credential_correction",
     "actual_monday_0900_london_pre_post_not_observed",
     "source_exchange_calendar_proof",
     "per_source_fetch_asof_when_run_overlaps_cutoff",
@@ -67,5 +67,19 @@
     "live_asof_31_pair_EG_confidence_entry_candidate_allocator_parity",
     "broker_risk_orders_not_authorized"
   ],
-  "one_next_executable_task": "Configure authorized offline Google Drive OAuth as GitHub Actions secrets and exact folder repository variable, trigger one research-only run, and verify actual remote restore+upload+readback without dropping 3-batch prefix"
+  "one_next_executable_task": "After user corrects matching OAuth client ID/secret (and refresh token if issued to different client) in GitHub Secrets, trigger read-only research-branch workflow and verify actual Drive restore, 194-source capture, delta upload/readback into 4-batch archive.",
+  "oauth_connectivity_test": {
+    "status": "BLOCK_GOOGLE_INVALID_CLIENT",
+    "github_run_id": 36635583412,
+    "branch_head": "057f0a5a9c485cb2425bfe09b25267432a42aec7",
+    "tests_passed": 37,
+    "configured_four_settings_reached_oauth": true,
+    "google_sanitized_error": "invalid_client",
+    "remote_archive_restored": false,
+    "new_capture_performed": false,
+    "remote_delta_published": false,
+    "archive_prefix_still_three_batches": true,
+    "no_secrets_logged": true,
+    "initial_failed_run_attempt": "36600043914/attempts/2"
+  }
 }
