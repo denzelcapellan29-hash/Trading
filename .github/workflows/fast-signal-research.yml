@@ -1,0 +1,44 @@
+name: FAST Frozen 31-Pair Signal Research
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/tv-python-ibkr-shadow-bridge]
+    paths:
+      - '.github/workflows/fast-signal-research.yml'
+      - 'code/production/tools/fast_live_signal_diagnostic.py'
+      - 'code/production/src/trading_prod/fast_frozen_signal_core.py'
+      - 'code/production/tools/frozen_fast_pair_inputs.json'
+      - 'code/production/tests/test_fast_live_signal_diagnostic.py'
+      - 'code/production/tests/test_fast_frozen_signal_core.py'
+permissions:
+  contents: read
+jobs:
+  read-only-signals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test frozen model and broker infrastructure
+        working-directory: code/production
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[equity]'
+          python -m unittest discover -s tests -v
+      - name: Fetch bounded authorized D/W TradingView sources and calculate research signals
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: |
+          python -m pip install --disable-pip-version-check tradingview-api-python
+          python tools/fast_live_signal_diagnostic.py --out "$RUNNER_TEMP/fast_31_research_only.json"
+      - name: Preserve derived research-only diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast-31-research-only
+          path: ${{ runner.temp }}/fast_31_research_only.json
+          retention-days: 2
+          if-no-files-found: ignore
