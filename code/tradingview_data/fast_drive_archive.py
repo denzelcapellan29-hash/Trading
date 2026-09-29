@@ -18,6 +18,7 @@ import sys
 import tempfile
 import urllib.parse
 import urllib.request
+import urllib.error
 from pathlib import Path
 from fast_snapshot_continuity import validate_database, sha256
 
@@ -153,8 +154,22 @@ class DriveStore:
         req=urllib.request.Request('https://oauth2.googleapis.com/token',data=body,method='POST')
         try:
             with urllib.request.urlopen(req,timeout=25) as resp:token=json.load(resp).get('access_token')
-        except Exception as exc:
-            raise ArchiveBlocked('DRIVE_OAUTH_TOKEN_EXCHANGE_FAILED') from None
+        except urllib.error.HTTPError as exc:
+            # Show only a Google-defined OAuth error identifier, never the
+            # response description or a token. These descriptions are untrusted
+            # and may inadvertently contain account/client details.
+            try:
+                response = json.loads(exc.read(8192))
+                code = response.get('error') if isinstance(response, dict) else None
+            except (ValueError, OSError):
+                code = None
+            permitted = {'invalid_grant', 'invalid_client', 'unauthorized_client',
+                         'invalid_request', 'access_denied', 'invalid_scope',
+                         'unsupported_grant_type', 'temporarily_unavailable'}
+            safe = code if isinstance(code, str) and code in permitted else 'unclassified_response'
+            raise ArchiveBlocked('DRIVE_OAUTH_TOKEN_EXCHANGE_FAILED:' + safe) from None
+        except Exception:
+            raise ArchiveBlocked('DRIVE_OAUTH_TOKEN_EXCHANGE_FAILED:transport_error') from None
         if not token:raise ArchiveBlocked('DRIVE_OAUTH_ACCESS_TOKEN_MISSING')
         self._token=token
     def _request(self,url,*,data=None,content_type=None):
