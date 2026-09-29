@@ -1,0 +1,44 @@
+name: FAST Production Model Input Coverage
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - production/fx-fast-api-input-gate
+    paths:
+      - '.github/workflows/fast-production-input-coverage.yml'
+      - 'code/tradingview_data/frozen_fast_inputs_probe.py'
+      - 'code/tradingview_data/frozen_fast_source_symbols.json'
+
+permissions:
+  contents: read
+
+jobs:
+  sources:
+    name: Source coverage ${{ matrix.group }} ${{ matrix.timeframe }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [fxcm, factors]
+        timeframe: [W, D]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install read-only market-data client
+        run: python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Read exact frozen source tickers
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python code/tradingview_data/frozen_fast_inputs_probe.py --group ${{ matrix.group }} --timeframe ${{ matrix.timeframe }}
+      - name: Preserve per-source CSVs and safe diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast-model-inputs-${{ matrix.group }}-${{ matrix.timeframe }}
+          path: artifacts/tradingview_model_inputs/${{ matrix.group }}_${{ matrix.timeframe }}/
+          retention-days: 7
+          if-no-files-found: warn
