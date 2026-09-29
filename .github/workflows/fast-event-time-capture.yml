@@ -5,13 +5,12 @@ on:
     branches: [production/fx-fast-api-input-gate]
     paths:
       - '.github/workflows/fast-event-time-capture.yml'
-      - 'code/tradingview_data/fast_event_time_ledger.py'
-      - 'code/tradingview_data/test_event_time_ledger.py'
-      - 'code/tradingview_data/capture_fast_source_snapshot.py'
-      - 'code/tradingview_data/fast_snapshot_continuity.py'
-      - 'code/tradingview_data/test_source_continuity.py'
-      - 'code/tradingview_data/fast_monday_cutoff_shadow.py'
-      - 'code/tradingview_data/test_monday_cutoff.py'
+# The research branch cannot receive GitHub scheduled events until merged;
+# do NOT merge merely to schedule it. Use explicit Monday workflow_dispatch
+# until the release owner authorizes a branch scheduling/deployment decision.
+concurrency:
+  group: fast-event-time-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
   contents: read
   actions: read
@@ -32,49 +31,108 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for name in test_event_time_ledger test_source_continuity test_monday_cutoff; do
+          for name in test_event_time_ledger test_source_continuity test_monday_cutoff test_fast_drive_archive; do
             PYTHONPATH=code/tradingview_data python -m unittest -v "$name"
           done
-      - name: Restore exact prior as-observed DB or fail closed
+      - name: Restore permanent Drive archive, or research-only rolling GH predecessor
         shell: bash
+        env:
+          FAST_DRIVE_CLIENT_ID: ${{ secrets.FAST_DRIVE_CLIENT_ID }}
+          FAST_DRIVE_CLIENT_SECRET: ${{ secrets.FAST_DRIVE_CLIENT_SECRET }}
+          FAST_DRIVE_REFRESH_TOKEN: ${{ secrets.FAST_DRIVE_REFRESH_TOKEN }}
+          FAST_DRIVE_FOLDER_ID: ${{ vars.FAST_DRIVE_FOLDER_ID }}
         run: |
           set -euo pipefail
           mkdir -p artifacts/fast_event_time_capture
-          # Do not fall back after finding a corrupt predecessor artifact. A
-          # failed capture may still contain valuable recorded observations.
-          restored=0
-          while read -r prior_run; do
-            [ -n "$prior_run" ] || continue
-            mkdir -p "$RUNNER_TEMP/fast-previous/$prior_run"
-            if gh run download "$prior_run" --repo "$GITHUB_REPOSITORY" \
-                 --name frozen-fast-event-time-snapshot \
-                 --dir "$RUNNER_TEMP/fast-previous/$prior_run" >/dev/null 2>&1; then
-              prior="$RUNNER_TEMP/fast-previous/$prior_run/source_versions.sqlite3"
-              if [ ! -s "$prior" ]; then
-                echo "Predecessor artifact exists but lacks DB: refusing silently downgraded state" >&2
-                exit 4
-              fi
-              python code/tradingview_data/fast_snapshot_continuity.py \
-                --predecessor "$prior" \
-                --destination artifacts/fast_event_time_capture/source_versions.sqlite3 \
-                --receipt artifacts/fast_event_time_capture/restore_receipt.json
-              echo "prior_run_id=$prior_run" >> "$GITHUB_ENV"
-              restored=1
-              break
-            fi
-          done < <(gh run list --repo "$GITHUB_REPOSITORY" \
-             --workflow fast-event-time-capture.yml --branch "$GITHUB_REF_NAME" \
-             --status completed --limit 25 --json databaseId \
-             --jq '.[].databaseId' | grep -v "^${GITHUB_RUN_ID}$")
-          if [ "$restored" != 1 ]; then
-            echo 'BLOCK: no verified preceding durable run found. Supervised bootstrap required.' >&2
+          output=artifacts/fast_event_time_capture/source_versions.sqlite3
+          any=0; all=1
+          for key in FAST_DRIVE_CLIENT_ID FAST_DRIVE_CLIENT_SECRET FAST_DRIVE_REFRESH_TOKEN FAST_DRIVE_FOLDER_ID; do
+            if [ -n "${!key}" ]; then any=1; else all=0; fi
+          done
+          if [ "$any" = 1 ] && [ "$all" != 1 ]; then
+            echo 'BLOCK: partially configured independent durable archive' >&2
             exit 4
           fi
+          if [ "$all" = 1 ]; then
+            python code/tradingview_data/fast_drive_archive.py restore \
+               --out "$output" --receipt artifacts/fast_event_time_capture/durable_restore.json
+            # Optionally compare the most recent authentic GH artifact; a newer
+            # GH capture CANNOT be silently abandoned when enabling Drive.
+            while read -r prior_run; do
+              [ -n "$prior_run" ] || continue
+              mkdir -p "$RUNNER_TEMP/fast-gh-compare/$prior_run"
+              if gh run download "$prior_run" --repo "$GITHUB_REPOSITORY" \
+                  --name frozen-fast-event-time-snapshot \
+                  --dir "$RUNNER_TEMP/fast-gh-compare/$prior_run" >/dev/null 2>&1; then
+                p="$RUNNER_TEMP/fast-gh-compare/$prior_run/source_versions.sqlite3"
+                if [ ! -s "$p" ]; then echo 'BLOCK: malformed GH predecessor' >&2; exit 4; fi
+                python code/tradingview_data/fast_drive_archive.py reconcile-github \
+                   --db "$output" --prev "$p" \
+                   --receipt artifacts/fast_event_time_capture/drive_gh_reconciliation.json
+                echo "gh_comparator_run=$prior_run" >> "$GITHUB_ENV"
+                break
+              fi
+            done < <(gh run list --repo "$GITHUB_REPOSITORY" \
+              --workflow fast-event-time-capture.yml --branch "$GITHUB_REF_NAME" \
+              --status completed --limit 30 --json databaseId \
+              --jq '.[].databaseId' | grep -v "^${GITHUB_RUN_ID}$")
+            head=$(python -c "import json;print(json.load(open('artifacts/fast_event_time_capture/durable_restore.json'))['head_sha256'])")
+            echo "FAST_ARCHIVE_CONFIGURED=yes" >> "$GITHUB_ENV"
+            echo "FAST_ARCHIVE_PARENT_SHA=$head" >> "$GITHUB_ENV"
+          else
+            # Existing GH-only behavior stays research-only and still hard
+            # fails on missing/corrupt prior. It is NOT independent durability.
+            restored=0
+            while read -r prior_run; do
+              [ -n "$prior_run" ] || continue
+              mkdir -p "$RUNNER_TEMP/fast-previous/$prior_run"
+              if gh run download "$prior_run" --repo "$GITHUB_REPOSITORY" \
+                 --name frozen-fast-event-time-snapshot \
+                 --dir "$RUNNER_TEMP/fast-previous/$prior_run" >/dev/null 2>&1; then
+                prior="$RUNNER_TEMP/fast-previous/$prior_run/source_versions.sqlite3"
+                [ -s "$prior" ] || { echo 'BLOCK: malformed prior artifact' >&2; exit 4; }
+                python code/tradingview_data/fast_snapshot_continuity.py \
+                   --predecessor "$prior" --destination "$output" \
+                   --receipt artifacts/fast_event_time_capture/restore_receipt.json
+                echo "prior_run_id=$prior_run" >> "$GITHUB_ENV"
+                restored=1;break
+              fi
+            done < <(gh run list --repo "$GITHUB_REPOSITORY" \
+              --workflow fast-event-time-capture.yml --branch "$GITHUB_REF_NAME" \
+              --status completed --limit 30 --json databaseId \
+              --jq '.[].databaseId' | grep -v "^${GITHUB_RUN_ID}$")
+            if [ "$restored" != 1 ]; then
+              echo 'BLOCK: no verified preceding GH artifact, durable restore not configured' >&2
+              exit 4
+            fi
+            echo '{"status":"UNCONFIGURED_GITHUB_ROLLING_ONLY","independently_durable":false,"orders_enabled":false}' \
+               > artifacts/fast_event_time_capture/durable_status.json
+            echo "FAST_ARCHIVE_CONFIGURED=no" >> "$GITHUB_ENV"
+          fi
+          cp "$output" "$RUNNER_TEMP/fast-verified-pre-capture.sqlite3"
       - name: Capture full frozen D/W input versions
         env:
           SESSIONID: ${{ secrets.SESSIONID }}
           SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
         run: python code/tradingview_data/capture_fast_source_snapshot.py
+      - name: Publish immutable incremental Drive segment when authorized
+        shell: bash
+        env:
+          FAST_DRIVE_CLIENT_ID: ${{ secrets.FAST_DRIVE_CLIENT_ID }}
+          FAST_DRIVE_CLIENT_SECRET: ${{ secrets.FAST_DRIVE_CLIENT_SECRET }}
+          FAST_DRIVE_REFRESH_TOKEN: ${{ secrets.FAST_DRIVE_REFRESH_TOKEN }}
+          FAST_DRIVE_FOLDER_ID: ${{ vars.FAST_DRIVE_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          if [ "${FAST_ARCHIVE_CONFIGURED:-no}" != yes ]; then
+            echo 'Research-only: no independent archive credentials; explicit release hold'
+            exit 0
+          fi
+          python code/tradingview_data/fast_drive_archive.py publish \
+              --prev "$RUNNER_TEMP/fast-verified-pre-capture.sqlite3" \
+              --db artifacts/fast_event_time_capture/source_versions.sqlite3 \
+              --expected-head "$FAST_ARCHIVE_PARENT_SHA" \
+              --receipt artifacts/fast_event_time_capture/durable_status.json
       - name: Audit Monday 09 London shadow cutoff when it has occurred
         shell: bash
         run: |
