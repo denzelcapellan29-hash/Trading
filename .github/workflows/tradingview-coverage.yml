@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/tradingview-coverage.yml'
+      - 'code/tradingview_data/*_coverage_test.py'
+      - 'code/tradingview_data/history_depth_test.py'
 permissions:
   contents: read
 jobs:
@@ -37,5 +39,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tradingview-coverage
-          path: artifacts/tradingview_smoke/
+          path: |
+            artifacts/tradingview_fx31/
+            artifacts/tradingview_metals/
+            artifacts/tradingview_depth/
           retention-days: 7
