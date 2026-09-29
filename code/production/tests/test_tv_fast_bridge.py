@@ -1,4 +1,9 @@
+import io
 import json
+import os
+import sys
+import types
+from contextlib import redirect_stdout
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -46,7 +51,8 @@ class FakeSession:
 
 
 class FakeClient:
-    def __init__(self):self.Session=FakeSession()
+    def __init__(self, **kwargs):self.Session=FakeSession()
+    def end(self):pass
 
 
 class BridgeTests(unittest.TestCase):
@@ -129,6 +135,67 @@ class BridgeTests(unittest.TestCase):
                 self.assertEqual(duplicate.submitted_broker_order_ids,())
             finally:
                 broker.disconnect()
+
+
+    def test_operator_coverage_cli_mocked_provider_no_file_archive(self):
+        tools = Path(__file__).resolve().parents[1] / 'tools'
+        sys.path.insert(0, str(tools))
+        import tv_fast_shadow
+        with patch.dict(os.environ, {'SESSIONID':'fixture-only','SESSIONID_SIGN':'fixture-only'}), \
+             patch.dict(sys.modules, {'tradingviewApiPython':types.SimpleNamespace(Client=FakeClient)}), \
+             patch('time.time', return_value=EPOCH), redirect_stdout(io.StringIO()) as log:
+            result=tv_fast_shadow.main(['--coverage-only'])
+        self.assertEqual(result,0)
+        audit=json.loads(log.getvalue())
+        self.assertEqual(audit['coverage'],31)
+        self.assertFalse(audit['orders_enabled'])
+        self.assertNotIn('prices',audit)
+
+    def test_operator_shadow_cli_uses_real_v1_pipeline_but_no_orders(self):
+        tools = Path(__file__).resolve().parents[1] / 'tools'
+        sys.path.insert(0, str(tools))
+        import tv_fast_shadow
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)
+            cfg=json.loads(Path('config/production_v1.example.json').read_text())
+            cfg['state']['sqlite_path']=str(path/'state.sqlite3')
+            cfgfile=path/'cfg.json';cfgfile.write_text(json.dumps(cfg))
+            dt=datetime.fromtimestamp(EPOCH-20,timezone.utc).isoformat()
+            sample={'strategy_id':'FAST_31PAIR_PRODUCTION',
+                 'strategy_version':FREEZE_ID,'signal_id':'MOCK_NOT_TRADABLE',
+                 'signal_timestamp':dt,'calculation_timestamp':dt,
+                 'instrument':{'symbol':'EUR','currency':'USD',
+                               'sec_type':'CASH','exchange':'IDEALPRO'},
+                 'target_batch_id':'test-0001','native_notional_fraction':.2}
+            signals=path/'signals.jsonl';signals.write_text(json.dumps(sample)+'\n')
+            with patch.dict(os.environ, {'SESSIONID':'fixture-only','SESSIONID_SIGN':'fixture-only'}), \
+                 patch.dict(sys.modules, {'tradingviewApiPython':types.SimpleNamespace(Client=FakeClient)}), \
+                 patch('time.time', return_value=EPOCH), redirect_stdout(io.StringIO()) as log:
+                code=tv_fast_shadow.main(['--signals',str(signals),'--config',str(cfgfile),'--nav','100000'])
+            self.assertEqual(code,0)
+            audit=json.loads(log.getvalue())
+            self.assertEqual(audit['coverage'],31)
+            self.assertEqual(audit['target_count'],1)
+            self.assertEqual(audit['order_intents'],1)
+            self.assertEqual(audit['submitted_order_ids'],[])
+            self.assertTrue(audit['risk_approved'])
+            self.assertTrue((path/'state.sqlite3').exists())
+            self.assertFalse((path/'source_versions.sqlite3').exists())
+            self.assertEqual(audit['status'],'SHADOW_PLANNED_NOT_SIGNAL_PARITY_APPROVED')
+
+    def test_operator_refuses_any_transmit_before_connecting_to_tv(self):
+        tools = Path(__file__).resolve().parents[1] / 'tools'
+        sys.path.insert(0, str(tools))
+        import tv_fast_shadow
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)
+            cfg=json.loads(Path('config/production_v1.example.json').read_text())
+            cfg['execution_mode']='PAPER';cfg['transmit_orders']=True
+            cfgfile=path/'cfg.json';cfgfile.write_text(json.dumps(cfg))
+            f=path/'signals.jsonl';f.write_text('{}\n')
+            with patch.dict(os.environ, {'SESSIONID':'fixture-only','SESSIONID_SIGN':'fixture-only'}):
+                with self.assertRaisesRegex(DataBlocked,'SHADOW_ONLY'):
+                    tv_fast_shadow.main(['--config',str(cfgfile),'--signals',str(f),'--nav','100000'])
 
 
 if __name__ == '__main__':unittest.main()
