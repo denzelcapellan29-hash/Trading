@@ -15,13 +15,88 @@ from pathlib import Path
 from tradingviewApiPython import Client
 
 CASES = [
-    ("OANDA:EURUSD", "W", 100),
-    ("OANDA:EURUSD", "120", 100),
-    ("OANDA:XAUUSD", "D", 100),
-    ("COMEX:GC1!", "W", 100),
-    ("AMEX:PALL", "W", 100),
-]
-OUTPUT = Path("artifacts/tradingview_smoke")
+  [
+    "OANDA:XAUUSD",
+    "W",
+    100
+  ],
+  [
+    "OANDA:XAGUSD",
+    "W",
+    100
+  ],
+  [
+    "COMEX:GC1!",
+    "W",
+    100
+  ],
+  [
+    "COMEX:SI1!",
+    "W",
+    100
+  ],
+  [
+    "COMEX:HG1!",
+    "W",
+    100
+  ],
+  [
+    "NYMEX:PL1!",
+    "W",
+    100
+  ],
+  [
+    "NYMEX:PA1!",
+    "W",
+    100
+  ],
+  [
+    "AMEX:GLD",
+    "W",
+    100
+  ],
+  [
+    "AMEX:SLV",
+    "W",
+    100
+  ],
+  [
+    "AMEX:SIVR",
+    "W",
+    100
+  ],
+  [
+    "AMEX:PPLT",
+    "W",
+    100
+  ],
+  [
+    "AMEX:PALL",
+    "W",
+    100
+  ],
+  [
+    "AMEX:CPER",
+    "W",
+    100
+  ],
+  [
+    "AMEX:DBP",
+    "W",
+    100
+  ],
+  [
+    "AMEX:DBB",
+    "W",
+    100
+  ],
+  [
+    "AMEX:GLTR",
+    "W",
+    100
+  ]
+] 
+OUTPUT = Path("artifacts/tradingview_metals")
 OUTPUT.mkdir(parents=True, exist_ok=True)
 TIMEOUT_SECONDS = 35
 
