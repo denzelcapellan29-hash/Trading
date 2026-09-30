@@ -21,8 +21,7 @@ def main():
         print(json.dumps({"status":"BLOCK_MISSING_STUDY","found":sorted(found),"expected":list(TARGETS)}))
         return 4
     client=Client(token=sid,signature=sign)
-    chart=client.Session.Chart()
-    chart.set_market("OANDA:XAUUSD",{"timeframe":"W","range":320})
+    chart=client.Session.Chart()\n    # Upstream 0.1.0 Study references session_id, while ChartSession exposes _chart_session_id.\n    # Local compatibility alias only; no TradingView or model state is modified.\n    if not hasattr(chart,"session_id") and hasattr(chart,"_chart_session_id"):\n        chart.session_id=chart._chart_session_id\n    chart.set_market("OANDA:XAUUSD",{"timeframe":"W","range":320})
     studies={}
     try:
         for name in TARGETS:
