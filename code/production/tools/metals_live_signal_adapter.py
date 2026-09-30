@@ -59,6 +59,7 @@ def validate_frozen_overlap(weekly:pd.DataFrame,fixture_path:Path)->dict:
         "missing_rows":len(missing),"mismatch_rows":len(mismatch),
         "first_missing_end_ms":int(missing[0]) if missing else None,
         "first_mismatch_end_ms":int(mismatch[0]) if mismatch else None,
+        "mismatch_end_ms":[int(k) for k in mismatch[:10]],
         "passed":not missing and not mismatch,
         "fixture_overall_sha256":fixture.get("overall_sha256"),
     }
