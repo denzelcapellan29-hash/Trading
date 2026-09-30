@@ -1,0 +1,39 @@
+name: Three Portfolio Frozen Readiness (No Orders)
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/three-portfolio-integration]
+    paths:
+      - '.github/workflows/three-portfolio-readiness.yml'
+      - 'code/production/config/three_portfolio_release_manifest.json'
+      - 'code/production/tools/check_three_portfolio_readiness.py'
+      - 'code/production/tools/replay_frozen_metals_parity.py'
+      - 'code/production/tests/test_three_portfolio_readiness.py'
+      - 'code/production/tests/test_metals_reference_parity.py'
+permissions:
+  contents: read
+jobs:
+  frozen-release-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install existing production dependencies
+        working-directory: code/production
+        run: python -m pip install --disable-pip-version-check -e '.[equity]'
+      - name: Verify preexisting engine and all three-sleeve readiness tests
+        working-directory: code/production
+        run: python -m unittest discover -s tests -v
+      - name: Read-only readiness output; PAPER and LIVE remain blocked
+        working-directory: code/production
+        run: |
+          python tools/check_three_portfolio_readiness.py --mode SHADOW
+          if python tools/check_three_portfolio_readiness.py --mode PAPER; then
+            echo 'ERROR: unqualified combined PAPER mode was accepted' >&2
+            exit 1
+          else
+            echo 'EXPECTED: combined PAPER requires frozen instruments, strategies, risk and explicit approval'
+          fi
