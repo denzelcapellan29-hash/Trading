@@ -1,0 +1,26 @@
+name: Metals Saved Study Schema Probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/three-portfolio-integration]
+    paths:
+      - '.github/workflows/metals-tv-study-schema.yml'
+      - 'code/production/tools/metals_tv_study_schema.py'
+permissions:
+  contents: read
+jobs:
+  read-only-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Read exact user-owned exporter schemas; print no licensed values
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python tools/metals_tv_study_schema.py
