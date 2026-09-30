@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "scope": "FROZEN_FAST_EQUITIES_METALS",
+  "as_of_utc": "2026-09-29",
+  "repo": "denzelcapellan29-hash/Trading",
+  "account_outer_allocations": null,
+  "all_portfolio_paper_orders_authorized": false,
+  "all_portfolio_live_orders_authorized": false,
+  "combined_broker_gates": {
+    "actual_ibkr_paper_snapshot": false,
+    "account_gross_net_order_limits_frozen": false,
+    "protective_order_and_scheduled_exit_policy_tested": false,
+    "restart_partial_fill_duplicate_recovery_paper_tested": false,
+    "three_sleeve_combined_risk_and_target_replay": false
+  },
+  "portfolios": {
+    "FAST": {
+      "freeze_id": "FX-FAST-2026-08-28",
+      "strategy_ids": ["FAST_31PAIR_PRODUCTION"],
+      "historical_reference_reproduced": true,
+      "research_current_source_model_coverage": "194/194 surfaces; 31/31 pair EG63 and EG126; Tuesday research only",
+      "paper_gates": {
+        "prospective_asof_and_same_decision_signal_parity": false,
+        "original_oanda_execution_vol_and_cohort_allocator_parity": false,
+        "normalized_current_strategy_targets_and_expiry": false,
+        "ibkr_spot_bid_ask_contract_and_protective_exit_parity": false
+      },
+      "execution_identity": "IBKR CASH/IDEALPRO; indicative TradingView FXCM marks are not executable bids or asks"
+    },
+    "EQUITIES": {
+      "freeze_id": "EQUITY_FROZEN_REFERENCE_VINTAGES_IN_CANONICAL_HANDOFF",
+      "strategy_ids": ["MOMENTUM_BARBELL", "AGREEMENT_REVERSION", "PCA_STATARB_8910", "CORRIDOR_ACCEPT"],
+      "historical_reference_reproduced": false,
+      "research_current_source_model_coverage": "IBKR paper API handshake previously passed; delayed daily full 503 not yet validated; 78m Corridor separate",
+      "paper_gates": {
+        "full_503_completed_daily_source_and_ticker_parity": false,
+        "barbell_original_selected_holdings_parity": false,
+        "agreement_original_selected_holdings_export_and_parity": false,
+        "pca_8_9_10_original_selected_holdings_export_and_parity": false,
+        "corridor_causal_78m_live_signal_and_target_parity": false,
+        "normalized_current_target_and_expiry_parity": false,
+        "ibkr_contract_quote_liquidity_and_corporate_action_check": false
+      },
+      "execution_identity": "IBKR stock contracts; Corridor 78m and completed daily sleeves have different source/frequency gates",
+      "excluded_until_frozen": ["EQUITY_PUT_OVERLAY"]
+    },
+    "METALS": {
+      "freeze_id": "METALS-FROZEN-2026-09-17",
+      "strategy_ids": ["METALS_RAW_H2", "METALS_PRICE_PCA_H2", "METALS_ETF_FLOW_H1"],
+      "research_universe": ["Gold", "Silver", "Platinum", "Palladium", "Copper", "Aluminium", "Nickel", "Zinc", "Lead", "Tin"],
+      "frozen_internal_component_weights": {
+        "METALS_RAW_H2": 0.25,
+        "METALS_PRICE_PCA_H2": 0.25,
+        "METALS_ETF_FLOW_H1": 0.50
+      },
+      "historical_reference_reproduced": true,
+      "replay_verified_outputs": {
+        "arrays": 8,
+        "numeric_max_abs_error": 0.0,
+        "raw_replay_fixture_weekly_rows": 974,
+        "original_reference_python_sha256": "856f84e5e34433f7fce238b99dd932cfc8a1a074588250bab296ef6de7f3835a",
+        "validated_metals_export_zip_sha256": "4207cf35655fdc59c0f38d3a1183aae9069c18a7517526b6a44ca6f6289e8e22"
+      },
+      "paper_gates": {
+        "live_ten_confirmed_weekly_continuous_futures_input_parity": false,
+        "live_point_in_time_etf_flow_aum_and_frozen_week_lag": false,
+        "rolling_27_price_pca_and_two_flow_pca_target_parity": false,
+        "original_causal_26w_shifted_volatility_and_h1_h2_cohort_parity": false,
+        "all_ten_metal_executable_ibkr_instrument_contract_mapping": false,
+        "broker_contract_roll_multiplier_margin_and_order_rounding_parity": false,
+        "normalized_current_target_and_expiry_parity": false
+      },
+      "production_execution_instrument_map": null,
+      "research_inputs_are_not_directly_tradable": true,
+      "live_source_timing": "Generate after confirmed Friday weekly bar; place at next actually tradable session; never assert historical Friday close is executable",
+      "rejected_unpromoted_features": ["new Palladium cap", "COT gate", "unlagged volatility target", "post-hoc weights"],
+      "execution_identity": "Ten continuous-futures signals require independent exact IBKR contract/spot/CFD choices; IBKR V1 domain currently supports only CASH/STK/OPT, no FUT sizing"
+    }
+  },
+  "release_policy": "This is an auditable project readiness manifest, not a broker-connected runtime gate. No paper or live orders authorized by changing this document; an actual integrated broker preflight plus separate explicit user authorization is mandatory."
+}
