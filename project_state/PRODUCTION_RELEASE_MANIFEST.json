@@ -118,7 +118,7 @@
     "failures": 0,
     "scope": "offline fake TradingView + original IBKR V1 simulated portfolio/reconciliation"
   },
-  "next_executable_task": "Next prospective Monday 2026-10-05 09:00 Europe/London: independently capture simultaneous full 31-pair Pine and Python model/factor/EG/confidence references using true known sources, reproduce original OANDA execution 13-week vol + full frozen bounded 8%-risk cohort, then only upon parity connect qualified StrategyTarget to PR4 and begin local IBKR paper reconciliation; do not backdate Tuesday research signals.",
+  "next_executable_task": "Implement time-aware live ten-metal confirmed-weekly data plus separately verified as-of six ETF flow/AUM source adapter; reproduce frozen 27 price-PCA variants, two lagged flow horizons, causal H1/H2 target snapshots against exact reference fixture. Parallel FAST genuine Monday and equity holdings work. No orders until verified IBKR paper and frozen three-way risk/allocation.",
   "orders_enabled": false,
   "previous_ibkr_machine_check": {
     "handshake": "verified in previous August/September equity session, not this run",
@@ -137,12 +137,50 @@
     "marks_to_simulated_ibkr_intents": "PASS",
     "qualified_fast_targets": "BLOCK_NOT_MONDAY_SOURCE_VERIFIED_OR_FULLY_ALLOCATED",
     "real_ibkr_paper_gateway_reconciliation": "NOT_YET_RUN",
-    "tv_fxcm_31_live_mark": "PASS"
+    "tv_fxcm_31_live_mark": "PASS",
+    "metals_live_input_to_target_parity": "BLOCK",
+    "metals_executable_ibkr_instrument_map": "BLOCK",
+    "three_way_outer_allocation": "UNFROZEN",
+    "three_portfolio_broker_paper_test": "NOT_YET_RUN"
   },
   "retuning": false,
   "snapshot_file_manifest_note": "file_manifest indexes immutable 2026-09-29 bundle contents; living canonical index subsequently appended verified Drive IDs.",
   "stacked_on_draft_pr": 2,
-  "state": "SHADOW_FULL31_CURRENT_SOURCE_SIGNAL_DIAGNOSTICS_PASS_PROSPECTIVE_ASOF_AND_TRADE_GATE_OPEN",
+  "state": "THREE_PORTFOLIO_SCOPE_DEFINED_METALS_HISTORICAL_PARITY_PASS_SHARED_EXECUTION_AND_LIVE_FEED_GATES_OPEN",
   "trading_repo": "denzelcapellan29-hash/Trading",
-  "unmerged": true
+  "unmerged": true,
+  "production_scope": "THREE_PORTFOLIOS_FAST_EQUITIES_METALS",
+  "account_outer_allocation_status": "UNFROZEN_FOR_THREE_PORTFOLIOS_PREVIOUS_50_50_AND_METALS_25_RESEARCH_ONLY",
+  "third_metals_portfolio": {
+    "freeze_id": "METALS-FROZEN-2026-09-17",
+    "research_universe": 10,
+    "internal_alpha_weights": {
+      "raw_h2": 0.25,
+      "price_pca_h2": 0.25,
+      "flow_h1": 0.5
+    },
+    "historical_replay": "PASS_EXACT_8_PANELS_MAX_ABS_0",
+    "rows_weekly": 974,
+    "rows_flow_each_horizon": 3582,
+    "original_handoff_sha256": "7297d30fad2b2345f3e63efb077d0ccf93008fefafa74f32d451972026c80df1",
+    "source_hash": "856f84e5e34433f7fce238b99dd932cfc8a1a074588250bab296ef6de7f3835a",
+    "input_hash": "4207cf35655fdc59c0f38d3a1183aae9069c18a7517526b6a44ca6f6289e8e22",
+    "live_price_etf_flow_asof_parity": "BLOCK",
+    "ibkr_10_metal_executable_contract_map": "BLOCK",
+    "prior_reference_price_ceiling": "2026-08-31_research_only",
+    "orders_authorized": false
+  },
+  "three_portfolio_integration": {
+    "git_branch": "production/three-portfolio-integration",
+    "draft_pr": 5,
+    "ci_run_id": 36657580334,
+    "ci_tests_passed": 55,
+    "ci_unqualified_paper_gate_rejected": true,
+    "mirror_source_drive_id": "1x51RShvBisvdPp9UFzJnNmmksvhE__3q",
+    "report_zip_drive_id": "1lunlcdjgZdX0IAcHI68cAZuPKAVlJ482",
+    "report_markdown_drive_id": "1xK0CmLnF7nJzSlphms-dep1qCmpe-4ms",
+    "metals_derived_parity_drive_id": "1-Y4OsN_mUC9bJNeqLXy-nsmB1LWNOTRs",
+    "standalone_machine_manifest_drive_id": "1KGmkWsfe1uJ9UKk5znU_dwWB6hOz8ZVa",
+    "original_metals_handoff_drive_id": "1Fl72hLgFnx6x9m0EE1MsALn22aTnP4XM"
+  }
 }
