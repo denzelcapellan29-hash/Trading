@@ -21,7 +21,12 @@ def main():
         print(json.dumps({"status":"BLOCK_MISSING_STUDY","found":sorted(found),"expected":list(TARGETS)}))
         return 4
     client=Client(token=sid,signature=sign)
-    chart=client.Session.Chart()\n    # Upstream 0.1.0 Study references session_id, while ChartSession exposes _chart_session_id.\n    # Local compatibility alias only; no TradingView or model state is modified.\n    if not hasattr(chart,"session_id") and hasattr(chart,"_chart_session_id"):\n        chart.session_id=chart._chart_session_id\n    chart.set_market("OANDA:XAUUSD",{"timeframe":"W","range":320})
+    chart=client.Session.Chart()
+    # Upstream package bug: Study references session_id while ChartSession exposes _chart_session_id.
+    # This local alias changes no TradingView state and no strategy calculation.
+    if not hasattr(chart,"session_id") and hasattr(chart,"_chart_session_id"):
+        chart.session_id=chart._chart_session_id
+    chart.set_market("OANDA:XAUUSD",{"timeframe":"W","range":320})
     studies={}
     try:
         for name in TARGETS:
@@ -33,14 +38,16 @@ def main():
                 break
             time.sleep(.2)
         out={"status":"PASS_SCHEMA_ONLY","chart_period_count":len(chart.periods or []),"studies":{},"orders_enabled":False}
-        for name,s in studies.items():
-            ps=s.periods or []
+        for name,study in studies.items():
+            ps=study.periods or []
             keys=sorted({k for p in ps[:20] if isinstance(p,dict) for k in p.keys()})
             times=[]
             for p in ps:
                 if isinstance(p,dict) and p.get("$time") is not None:
-                    try: times.append(float(p["$time"]))
-                    except Exception: pass
+                    try:
+                        times.append(float(p["$time"]))
+                    except Exception:
+                        pass
             out["studies"][name]={
                 "period_count":len(ps),
                 "period_keys":keys,
@@ -51,8 +58,10 @@ def main():
         print(json.dumps(out,sort_keys=True))
         return 0 if all(v["period_count"]>=100 for v in out["studies"].values()) else 3
     finally:
-        try: chart.delete()
-        except Exception: pass
+        try:
+            chart.delete()
+        except Exception:
+            pass
         client.end()
 
 if __name__=="__main__":
