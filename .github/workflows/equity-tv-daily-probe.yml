@@ -1,0 +1,26 @@
+name: Equity TradingView Daily Source Probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/three-portfolio-integration]
+    paths:
+      - '.github/workflows/equity-tv-daily-probe.yml'
+      - 'code/production/tools/equity_tv_daily_probe.py'
+permissions:
+  contents: read
+jobs:
+  read-only-equity-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Probe original BATS daily research namespace; no raw prices
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python tools/equity_tv_daily_probe.py
