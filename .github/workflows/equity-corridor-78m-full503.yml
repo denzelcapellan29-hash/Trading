@@ -1,0 +1,29 @@
+name: Equity Corridor ACCEPT Full503 Diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/three-portfolio-integration]
+    paths:
+      - '.github/workflows/equity-corridor-78m-full503.yml'
+permissions:
+  contents: read
+jobs:
+  corridor-full503-read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install production and TradingView client
+        working-directory: code/production
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[equity]'
+          python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Frozen Corridor ACCEPT full 503 current-source diagnostic; no orders
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python tools/equity_tv_corridor_pilot.py --limit 503 --depth 340
