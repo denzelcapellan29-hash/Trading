@@ -30,4 +30,4 @@ jobs:
         env:
           SESSIONID: ${{ secrets.SESSIONID }}
           SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
-        run: python tools/equity_tv_corridor_pilot.py --limit 503 --depth 340 --identity-fixture config/corridor_recent_identity_fixture.json
+        run: python tools/equity_tv_corridor_pilot.py --limit 503 --depth 340 --identity-fixture config/corridor_recent_identity_fixture.json --identity-fixture config/corridor_recent_identity_fixture.json
