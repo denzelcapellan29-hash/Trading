@@ -1,0 +1,21 @@
+{
+  "freeze_id": "FX-FAST-2026-08-28",
+  "handoff_sha256": "b90d7e98fb84650e3b388204c2c6f986b8f5635c4c4ddf3d15088bda67f71d40",
+  "reference_panel_sha256": "3a1e6c5826644abfea341efad8b46288c239195f83ec1660ab99e7c3ebaf5d81",
+  "reference_rows": 2744,
+  "weekly_cohorts": 948,
+  "max_abs_errors": {
+    "allocation_adjustment": 2.220446049250313e-16,
+    "portfolio_cap_scale": 2.220446049250313e-16,
+    "final_risk": 1.0061396160665481e-16,
+    "position_notional_equity": 3.3306690738754696e-16
+  },
+  "cohort_mismatch_counts_gt_1e12": {
+    "allocation_adjustment": 0,
+    "portfolio_cap_scale": 0,
+    "final_risk": 0,
+    "position_notional_equity": 0
+  },
+  "pass": true,
+  "orders_authorized": false
+}
