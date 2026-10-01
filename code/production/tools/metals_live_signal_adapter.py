@@ -64,6 +64,24 @@ def validate_frozen_overlap(weekly:pd.DataFrame,fixture_path:Path)->dict:
         "fixture_overall_sha256":fixture.get("overall_sha256"),
     }
 
+def diagnose_mismatch_fields(weekly:pd.DataFrame,fixture_path:Path)->dict:
+    fixture=json.loads(fixture_path.read_text())
+    spec=fixture.get("quantization",".12g")
+    out={}
+    for key,expected in (fixture.get("rows") or {}).items():
+        end_epoch=float(key)/1000.0
+        row=weekly[np.isclose(weekly["_end_epoch"].astype(float),end_epoch,atol=.5)]
+        if row.empty:
+            out[key]={"missing_row":True,"mismatched_fields":[]}
+            continue
+        r=row.iloc[-1]
+        mism=[]
+        for field,eh in expected.items():
+            gh=hashlib.sha256(_quantized(r.get(field),spec).encode()).hexdigest()
+            if gh!=eh:mism.append(field)
+        out[key]={"missing_row":False,"mismatched_fields":mism}
+    return out
+
 def _epoch_seconds(x):
     v=float(x)
     return v/1000.0 if v>1e11 else v
@@ -166,14 +184,14 @@ def latest_summary(weekly:pd.DataFrame,overlap:dict|None=None)->dict:
     }
 
 def main(argv=None):
-    ap=argparse.ArgumentParser(); ap.add_argument("--out",type=Path,default=Path("artifacts/metals_live_derived.json"));ap.add_argument("--depth",type=int,default=420); ap.add_argument("--hash-fixture",type=Path,default=Path(__file__).resolve().parents[1]/"config"/"metals_live_input_hash_fixture.json")
+    ap=argparse.ArgumentParser(); ap.add_argument("--out",type=Path,default=Path("artifacts/metals_live_derived.json"));ap.add_argument("--depth",type=int,default=420); ap.add_argument("--hash-fixture",type=Path,default=Path(__file__).resolve().parents[1]/"config"/"metals_live_input_hash_fixture.json"); ap.add_argument("--mismatch-field-fixture",type=Path,default=Path(__file__).resolve().parents[1]/"config"/"metals_two_mismatch_field_hashes.json")
     a=ap.parse_args(argv)
     sid=os.environ.get("SESSIONID") or os.environ.get("TV_SESSIONID"); sign=os.environ.get("SESSIONID_SIGN") or os.environ.get("TV_SESSIONID_SIGN")
     if not sid or not sign: raise MetalsBlocked("AUTHORIZED_TRADINGVIEW_SESSION_REQUIRED")
     weekly=collect_confirmed_weekly(sid,sign,a.depth)
     overlap=validate_frozen_overlap(weekly,a.hash_fixture)
     if not overlap["passed"]:
-        print(json.dumps({"status":"BLOCK_FROZEN_INPUT_OVERLAP_HASH","overlap":overlap,"orders_authorized":False},sort_keys=True))
+        print(json.dumps({"status":"BLOCK_FROZEN_INPUT_OVERLAP_HASH","overlap":overlap,"field_diagnosis":diagnose_mismatch_fields(weekly,a.mismatch_field_fixture),"orders_authorized":False},sort_keys=True))
         return 3
     summary=latest_summary(weekly,overlap)
     a.out.parent.mkdir(parents=True,exist_ok=True);a.out.write_text(json.dumps(summary,indent=2,allow_nan=False))
