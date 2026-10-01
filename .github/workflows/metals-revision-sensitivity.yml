@@ -1,0 +1,31 @@
+name: Metals Historical Revision Target Sensitivity
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/three-portfolio-integration]
+    paths:
+      - '.github/workflows/metals-revision-sensitivity.yml'
+      - 'code/production/tools/metals_revision_target_sensitivity.py'
+      - 'code/production/config/metals_aug31_reference_weights.json'
+permissions:
+  contents: read
+jobs:
+  target-sensitivity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        working-directory: code/production
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[equity]'
+          python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Recompute frozen Aug31 targets with currently revised saved-Pine history
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python tools/metals_revision_target_sensitivity.py
