@@ -8,6 +8,7 @@ on:
       - 'code/production/tools/equity_tv_corridor_pilot.py'
       - 'code/production/src/trading_prod/equity/corridor_accept.py'
       - 'code/production/tests/test_corridor_accept.py'
+      - 'code/production/config/corridor_recent_identity_fixture.json'
 permissions:
   contents: read
 jobs:
@@ -29,4 +30,4 @@ jobs:
         env:
           SESSIONID: ${{ secrets.SESSIONID }}
           SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
-        run: python tools/equity_tv_corridor_pilot.py --limit 503 --depth 340
+        run: python tools/equity_tv_corridor_pilot.py --limit 503 --depth 340 --identity-fixture config/corridor_recent_identity_fixture.json
