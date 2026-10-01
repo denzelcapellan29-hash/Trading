@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"src"))
 from trading_prod.equity.barbell import compute_barbell_selections
-from trading_prod.equity.pca_statarb import compute_pca_8910_selections
+from trading_prod.equity.pca_statarb import compute_pca_8910_selections\nfrom trading_prod.equity.agreement_reversion import compute_agreement_selections
 
 def fetch(client,symbol,depth=340,timeout=5.):
     c=client.Session.Chart()
@@ -73,9 +73,15 @@ def main(argv=None):
         pca_status="PASS_CURRENT_SOURCE_DIAGNOSTIC"
     except Exception as e:
         pca=[];pca_status="BLOCK_"+type(e).__name__
+    try:
+        agreement=compute_agreement_selections(panel,signal_date=signal_date)
+        agreement_status="PASS_DOCUMENTED_RULE_RECONSTRUCTION_SOURCE_PARITY_PENDING"
+    except Exception as e:
+        agreement=[];agreement_status="BLOCK_"+type(e).__name__
     result={"status":"DERIVED_CURRENT_EQUITY_DIAGNOSTIC","signal_date":str(signal_date.date()),"stock_coverage_on_signal_date":int(counts.loc[signal_date]),"universe_stocks":503,"source_failure_records":len(bad),
       "barbell":{"selection_count":len(sels),"selections":[{"ticker":x.ticker,"state":x.state,"D63":x.D63,"def_rvol63":x.def_rvol63,"tsmom_12_1":x.tsmom_12_1,"csmom_pct":x.csmom_pct} for x in sels]},
       "pca_8910":{"status":pca_status,"selection_count":len(pca),"rebalance_date":str(pca[0].rebalance_date.date()) if pca else None,"gross_abs_weight":sum(abs(x.target_weight) for x in pca),"net_weight":sum(x.target_weight for x in pca),"holdings":[{"ticker":x.ticker,"target_weight":x.target_weight,"k8_weight":x.k8_weight,"k9_weight":x.k9_weight,"k10_weight":x.k10_weight} for x in pca]},
+      "agreement":{"status":agreement_status,"selection_count":len(agreement),"rebalance_date":str(agreement[0].rebalance_date.date()) if agreement else None,"gross_weight":sum(x.target_weight for x in agreement),"source_parity_verified":False,"implementation_assumption":"OLS log-price vs equal-weight basket of 10 quarterly-frozen correlation peers","holdings":[{"ticker":x.ticker,"target_weight":x.target_weight,"residual_z":x.residual_z,"trailing20_return":x.trailing20_return,"half_life":x.half_life,"df_like":x.df_like,"peer_count":x.peer_count} for x in agreement]},
       "orders_authorized":False,"same_historical_vendor_parity_verified":False}
     print(json.dumps(result,sort_keys=True));return 0
 if __name__=="__main__":raise SystemExit(main())
