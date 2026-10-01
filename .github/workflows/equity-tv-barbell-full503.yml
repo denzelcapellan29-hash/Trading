@@ -7,6 +7,8 @@ on:
       - '.github/workflows/equity-tv-barbell-full503.yml'
       - 'code/production/tools/equity_tv_barbell_full503.py'
       - 'code/production/config/equity_universe_503_ibkr.csv'
+      - 'code/production/src/trading_prod/equity/pca_statarb.py'
+      - 'code/production/tests/test_pca_statarb_calendar.py'
 permissions:
   contents: read
 jobs:
