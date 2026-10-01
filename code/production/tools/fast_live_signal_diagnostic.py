@@ -139,6 +139,8 @@ def derive_current_signals(config,charts,observed_epoch):
                 'eg63_available':last.eg63_available,'eg63_stable':last.eg63_stable,
                 'eg126_available':last.eg126_available,'eg126_stable':last.eg126_stable,
                 'confidence_high':last.confidence_high,
+                'vol13_ann':last.vol13_ann,
+                'base_planned_risk':last.base_planned_risk if math.isfinite(last.base_planned_risk) else None,
                 'calculation_basis':'CURRENT_RETRIEVED_HISTORY_RETROSPECTIVE_ASOF_UNVERIFIED',
                 'orders_authorized':False
             }
@@ -197,7 +199,8 @@ def main(argv=None):
     public_summary={k:v for k,v in summary.items() if k!='signals'}
     if summary.get('diagnostic_pair_count') == 31:
         public_summary['shadow_signal_diagnostics']=[{'pair':p,'direction':v['direction'],
-             'branch':v['branch'],'multiplier':v['multiplier'], 'prior_week_end_utc':v['model_week_end_utc']}
+             'branch':v['branch'],'multiplier':v['multiplier'],'vol13_ann':v.get('vol13_ann'),
+             'base_planned_risk':v.get('base_planned_risk'),'prior_week_end_utc':v['model_week_end_utc']}
              for p,v in sorted(summary['signals'].items())]
     print(json.dumps(public_summary,sort_keys=True))
     return 0 if summary.get('diagnostic_pair_count')==31 else 3
