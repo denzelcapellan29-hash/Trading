@@ -5,6 +5,9 @@ on:
     branches: [production/three-portfolio-integration]
     paths:
       - '.github/workflows/equity-corridor-78m-full503.yml'
+      - 'code/production/tools/equity_tv_corridor_pilot.py'
+      - 'code/production/src/trading_prod/equity/corridor_accept.py'
+      - 'code/production/tests/test_corridor_accept.py'
 permissions:
   contents: read
 jobs:
