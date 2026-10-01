@@ -1,10 +1,26 @@
 from __future__ import annotations
 """Frozen Corridor ACCEPT v1 current-trade reconstruction.
 
-Directly ports the preserved Phase-2 map/touch/acceptance definitions and the
-Phase-5 executable target/stop rules. Phase-6 froze Corridor->ACCEPT with no
-Q, lifecycle or QR entry gate, so those exploratory layers are intentionally
-absent here. No PnL-selected parameters are introduced.
+Direct port of the Phase-2 event map plus the Phase-5 strict causal target
+implementation that Phase-6 used for the frozen Corridor->ACCEPT sleeve.
+
+Frozen rules:
+- EOD snapshot map from causal 2/2, 5/5 and 10/10 pivots, max age 100;
+- interacted node must be in TRAIN-fixed nearest-distance Q1 geometry
+  (dist_atr <= 0.357323996666185);
+- family = corridor;
+- first frozen-map node touch within next 10 bars;
+- ACCEPT resolution = later bar reaches 0.5 ATR beyond interacted node before
+  0.5 ATR rejection; same touch/resolution bar is excluded;
+- entry on that later resolution bar: at open if it gaps through trigger,
+  otherwise exactly at the 0.5 ATR trigger;
+- if the bar opens beyond structural invalidation, skip;
+- target = nearest already-frozen snapshot node beyond the trigger price;
+- stop = interacted node +/- 0.5 snapshot ATR opposite trade direction;
+- target/stop same bar = stop-first;
+- latest snapshot wins for duplicate same execution; one open trade per ticker.
+
+No Q gate, lifecycle gate or QR entry gate. No model retuning.
 """
 from dataclasses import dataclass
 import math
@@ -20,8 +36,7 @@ SIDE_DECAY=.75
 RESOLUTION_ATR=.50
 RESOLUTION_BARS=5
 FIRST_TOUCH_BARS=10
-PRIMARY_TARGET_MIN_ATR=.50
-PRIMARY_TARGET_MAX_ATR=1.50
+TRAIN_NEAR_Q=.357323996666185
 
 @dataclass(frozen=True)
 class CorridorTrade:
@@ -32,12 +47,14 @@ class CorridorTrade:
     entry_time:pd.Timestamp
     direction:int
     entry_price:float
+    threshold_price:float
     target_price:float
     stop_price:float
     exit_time:pd.Timestamp|None
     exit_price:float|None
     status:str
     target_dist_atr:float
+    gap_through_trigger:bool
 
 def make_pivots(H,L,C,k,max_age=MAX_AGE):
     n=len(C);out=[]
@@ -51,7 +68,7 @@ def make_pivots(H,L,C,k,max_age=MAX_AGE):
             end=min(n,cf+max_age+1);cond=C[cf+1:end]>lv if kind==1 else C[cf+1:end]<lv
             ix=np.flatnonzero(cond)
             if len(ix)>=2:invalid[q]=cf+1+ix[1]
-        out.extend(zip(conf,invalid,levels,np.full(len(levels),kind,dtype=int)))
+        if len(levels):out.extend(zip(conf,invalid,levels,np.full(len(levels),kind,dtype=int)))
     if not out:return tuple(np.array([]) for _ in range(4))
     x=np.array(out,float);order=np.argsort(x[:,0])
     return x[order,0].astype(int),x[order,1].astype(int),x[order,2],x[order,3].astype(int)
@@ -76,27 +93,27 @@ def build_nodes(p2,p5,p10,t,px,a):
         grp=fast[st:en];vv=grp[:,2];lv=float(vv.mean());dist=(lv-px)/a
         if abs(dist)<=MAP_RADIUS_ATR and abs(dist)>=1e-12:
             members=len(vv);div=1+(int(np.any(np.abs(med-lv)<=band)) if len(med) else 0)+(int(np.any(np.abs(slow-lv)<=band)) if len(slow) else 0)
-            span=float((vv.max()-vv.min())/a if len(vv)>1 else 0.)
-            nodes.append((lv,members,int(div),dist,span))
+            q=int(members>=3)+int(div>=2)
+            nodes.append({"level":lv,"members":members,"source_diversity":int(div),"Q":q,"dist":dist})
         st=en
     return nodes
 
 def classify_family(nodes):
-    ups=[x for x in nodes if x[3]>0];dns=[x for x in nodes if x[3]<0]
-    up_near=min((x[3] for x in ups),default=np.inf);dn_near=min((-x[3] for x in dns),default=np.inf)
-    um=sum(math.exp(-abs(x[3])/SIDE_DECAY) for x in ups);dm=sum(math.exp(-abs(x[3])/SIDE_DECAY) for x in dns);total=um+dm
+    ups=[x for x in nodes if x["dist"]>0];dns=[x for x in nodes if x["dist"]<0]
+    up_near=min((x["dist"] for x in ups),default=np.inf);dn_near=min((-x["dist"] for x in dns),default=np.inf)
+    um=sum(math.exp(-abs(x["dist"])/SIDE_DECAY) for x in ups);dm=sum(math.exp(-abs(x["dist"])/SIDE_DECAY) for x in dns);total=um+dm
     if total<=0:return "other_map",0,0,np.nan
     share=max(um,dm)/total;bias=1 if um>=dm else -1
     if up_near<=ACTIONABLE_ATR and dn_near<=ACTIONABLE_ATR and share<SIDE_SHARE:return "corridor",bias,share,min(up_near,dn_near)
     if share>=SIDE_SHARE:
         side=ups if bias==1 else dns
         if side:
-            side=sorted(side,key=lambda x:abs(x[3]));nearest=side[0];near=abs(nearest[3]);denser=any(x[1]>=2 for x in side[1:])
-            if near<=ACTIONABLE_ATR and nearest[1]==1 and denser:return "fragile_gateway_proxy",bias,share,near
+            side=sorted(side,key=lambda x:abs(x["dist"]));nearest=side[0];near=abs(nearest["dist"]);denser=any(x["members"]>=2 for x in side[1:])
+            if near<=ACTIONABLE_ATR and nearest["members"]==1 and denser:return "fragile_gateway_proxy",bias,share,near
             if near<=ACTIONABLE_ATR:return "usable_side_mixed",bias,share,near
     return "other_map",bias,share,min(up_near,dn_near)
 
-def _first_exit(O,H,L,start,direction,target,stop):
+def first_barrier_exit(O,H,L,start,direction,target,stop):
     for j in range(start,len(O)):
         op,hi,lo=O[j],H[j],L[j]
         if direction>0:
@@ -131,37 +148,43 @@ def reconstruct_corridor_accept(frame:pd.DataFrame,*,ticker:str)->list[CorridorT
         if not nodes or classify_family(nodes)[0]!="corridor":continue
         fh=H[t+1:min(n,t+1+FIRST_TOUCH_BARS)];fl=L[t+1:min(n,t+1+FIRST_TOUCH_BARS)]
         best=None
-        for ni,nod in enumerate(nodes):
-            lv=nod[0];hit=np.flatnonzero((fl<=lv)&(fh>=lv))
+        for ni,node in enumerate(nodes):
+            lv=node["level"];hit=np.flatnonzero((fl<=lv)&(fh>=lv))
             if len(hit):
-                key=(int(hit[0]),abs(nod[3]))
+                key=(int(hit[0]),abs(node["dist"]))
                 if best is None or key<best[0]:best=(key,ni,t+1+int(hit[0]))
         if best is None:continue
-        _,ni,touch=best;lv=nodes[ni][0];upper=lv>C[t]
+        _,ni,touch=best;node=nodes[ni]
+        if abs(float(node["dist"]))>TRAIN_NEAR_Q:continue
+        lv=float(node["level"]);upper=lv>C[t]
         hi=H[touch:min(n,touch+RESOLUTION_BARS+1)];lo=L[touch:min(n,touch+RESOLUTION_BARS+1)]
         if upper:
-            hold=np.flatnonzero(lo<=lv-RESOLUTION_ATR*a);accept=np.flatnonzero(hi>=lv+RESOLUTION_ATR*a)
+            hh=np.flatnonzero(lo<=lv-RESOLUTION_ATR*a);aa=np.flatnonzero(hi>=lv+RESOLUTION_ATR*a)
         else:
-            hold=np.flatnonzero(hi>=lv+RESOLUTION_ATR*a);accept=np.flatnonzero(lo<=lv-RESOLUTION_ATR*a)
-        hd=int(hold[0]) if len(hold) else 99;ad=int(accept[0]) if len(accept) else 99
-        if not ad<hd:continue
-        ridx=touch+ad;direction=1 if upper else -1
+            hh=np.flatnonzero(hi>=lv+RESOLUTION_ATR*a);aa=np.flatnonzero(lo<=lv-RESOLUTION_ATR*a)
+        hd=int(hh[0]) if len(hh) else 99;ad=int(aa[0]) if len(aa) else 99
+        if hd==ad or (hd==99 and ad==99) or not ad<hd:continue
+        ridx=touch+ad
+        if ridx<=touch:continue
+        direction=1 if upper else -1
+        stop=float(lv-direction*RESOLUTION_ATR*a)
+        threshold=float(lv+direction*RESOLUTION_ATR*a)
         cand=[]
         for k,n2 in enumerate(nodes):
             if k==ni:continue
-            lv2=n2[0]
-            if direction>0 and lv2>C[ridx]:cand.append((lv2-C[ridx],k))
-            elif direction<0 and lv2<C[ridx]:cand.append((C[ridx]-lv2,k))
+            delta=direction*(float(n2["level"])-threshold)
+            if delta>0:cand.append((delta,k))
         if not cand:continue
-        delta,ki=min(cand);target=float(nodes[ki][0]);td=float(delta/a)
-        if td<PRIMARY_TARGET_MIN_ATR or td>PRIMARY_TARGET_MAX_ATR:continue
-        entry_idx=ridx+1
-        if entry_idx>=n:continue
-        entry=float(O[entry_idx]);stop=float(lv-direction*RESOLUTION_ATR*a)
+        delta,ki=min(cand);target=float(nodes[ki]["level"]);td=float(delta/a)
+        op=float(O[ridx])
+        if direction*(op-stop)<=0:continue
+        gap=bool(direction*(op-threshold)>0)
+        entry=float(op if gap else threshold)
         if direction*(target-entry)<=0 or direction*(entry-stop)<=0:continue
-        exit_idx,exit_px,status=_first_exit(O,H,L,entry_idx,direction,target,stop)
-        raw.append((t,entry_idx,exit_idx,CorridorTrade(ticker,ts.iloc[t],ts.iloc[touch],ts.iloc[ridx],ts.iloc[entry_idx],direction,entry,target,stop,ts.iloc[exit_idx] if exit_idx is not None else None,exit_px,status,td)))
-    # Same execution may originate from overlapping prior EOD maps: latest snapshot wins.
+        exit_idx,exit_px,status=first_barrier_exit(O,H,L,ridx,direction,target,stop)
+        raw.append((t,ridx,exit_idx,CorridorTrade(
+            ticker,ts.iloc[t],ts.iloc[touch],ts.iloc[ridx],ts.iloc[ridx],direction,entry,threshold,target,stop,
+            ts.iloc[exit_idx] if exit_idx is not None else None,exit_px,status,td,gap)))
     by_entry={}
     for snap,ei,xi,tr in raw:by_entry[(ei,tr.direction)]=(snap,ei,xi,tr)
     ordered=sorted(by_entry.values(),key=lambda z:z[1]);out=[];last_exit=-1
