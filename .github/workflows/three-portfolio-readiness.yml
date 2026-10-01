@@ -13,6 +13,8 @@ on:
       - 'code/production/tools/replay_frozen_equity_c20.py'
       - 'code/production/tests/test_equity_c20_replay.py'
       - 'code/production/config/equity_c20_return_stream_parity.json'
+      - 'code/production/src/trading_prod/equity/pca_statarb.py'
+      - 'code/production/tests/test_pca_statarb_calendar.py'
 permissions:
   contents: read
 jobs:
