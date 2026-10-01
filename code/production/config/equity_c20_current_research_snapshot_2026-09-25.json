@@ -4,7 +4,7 @@
   "signal_date": "2026-09-25",
   "sources": {
     "daily_full503_run_id": 36878075653,
-    "corridor_full503_run_id": 36879132787,
+    "corridor_full503_run_id": 36882678757,
     "stock_coverage": 503,
     "corridor_tested": 503,
     "corridor_source_failures": 0
@@ -20,8 +20,9 @@
     "pca_8910": "PASS_CURRENT_SOURCE_DIAGNOSTIC",
     "agreement": "PASS_DOCUMENTED_RULE_RECONSTRUCTION_SOURCE_PARITY_PENDING",
     "agreement_source_parity_verified": false,
-    "corridor_accept": "PASS_CURRENT_SOURCE_DIAGNOSTIC_NO_OPEN_POSITIONS",
-    "orders_authorized": false
+    "corridor_accept": "PASS_RECENT_FROZEN_IDENTITY_PARITY_NO_OPEN_POSITIONS",
+    "orders_authorized": false,
+    "corridor_source_parity_verified": true
   },
   "current_component_state": {
     "barbell_count": 4,
@@ -242,5 +243,14 @@
       }
     ]
   },
-  "caveat": "Agreement is a documented-rule reconstruction using an isolated OLS peer-equilibrium assumption because the original holdings/source code is not preserved; historical source parity is pending. This snapshot is not an order authorization."
+  "caveat": "Agreement remains a documented-rule reconstruction using an isolated OLS peer-equilibrium assumption because the original holdings/source code is not preserved; historical source parity is pending. Corridor recent identity parity is verified for the fully warmed bounded overlap window. This snapshot is not an order authorization.",
+  "corridor_recent_identity_parity": {
+    "window_start_utc": "2026-08-01T00:00:00+00:00",
+    "window_end_utc": "2026-08-18T00:00:00+00:00",
+    "expected_count": 6,
+    "observed_count": 6,
+    "missing_count": 0,
+    "extra_count": 0,
+    "passed": true
+  }
 }
