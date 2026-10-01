@@ -63,11 +63,11 @@ def main(argv=None):
     finally:client.end()
     parity=None
     if a.identity_fixture:
-        fx=json.loads(a.identity_fixture.read_text());start=pd.Timestamp(fx["window_start_utc"])
+        fx=json.loads(a.identity_fixture.read_text());start=pd.Timestamp(fx["window_start_utc"]);end=pd.Timestamp(fx["window_end_utc"]) if fx.get("window_end_utc") else None
         def ident(t):
             return (t.ticker,t.snapshot_time.tz_convert("UTC").isoformat(),t.touch_time.tz_convert("UTC").isoformat(),
                     t.resolution_time.tz_convert("UTC").isoformat(),t.entry_time.tz_convert("UTC").isoformat(),int(t.direction))
-        observed=sorted({ident(t) for t in all_trades if t.entry_time.tz_convert("UTC")>=start})
+        observed=sorted({ident(t) for t in all_trades if t.entry_time.tz_convert("UTC")>=start and (end is None or t.entry_time.tz_convert("UTC")<end)})
         expected=sorted({(r["ticker"],r["snapshot_time"],r["touch_time"],r["resolution_time"],r["entry_time"],int(r["direction"])) for r in fx["trades"]})
         missing=sorted(set(expected)-set(observed));extra=sorted(set(observed)-set(expected))
         parity={"expected_count":len(expected),"observed_count":len(observed),"missing_count":len(missing),"extra_count":len(extra),
