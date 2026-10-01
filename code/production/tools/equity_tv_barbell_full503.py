@@ -12,7 +12,8 @@ from pathlib import Path
 import pandas as pd
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"src"))
 from trading_prod.equity.barbell import compute_barbell_selections
-from trading_prod.equity.pca_statarb import compute_pca_8910_selections\nfrom trading_prod.equity.agreement_reversion import compute_agreement_selections
+from trading_prod.equity.pca_statarb import compute_pca_8910_selections
+from trading_prod.equity.agreement_reversion import compute_agreement_selections
 
 def fetch(client,symbol,depth=340,timeout=5.):
     c=client.Session.Chart()
