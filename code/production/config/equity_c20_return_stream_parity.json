@@ -1,0 +1,16 @@
+{
+  "freeze_scope": "EQUITY_C20_FROZEN_RESEARCH_REFERENCE",
+  "source_phase6_sha256": "1837f0c5a6a7057eee8af20fb31bb2ea77171245dfacd956bc3a614ac9011748",
+  "independent_combined_sha256": "dca729a917849001825c79702ea853e1018941758a7f8d0e99f7d88c4b7165ba",
+  "phase6_rows": 705,
+  "aligned_rows": 703,
+  "realized_sample": ["2013-02-08","2026-07-24"],
+  "preferred_formula": "0.50 Barbell + 0.25 Agreement + 0.25 PCA 8/9/10",
+  "equity_c20_formula": "0.80 preferred + 0.20 Corridor ACCEPT",
+  "date_alignment": "signal/rebalance week + 7 calendar days = realized W-FRI",
+  "independent_crosscheck_overall_max_abs_error": 9.996344030316351e-17,
+  "metrics": {"cagr": 0.22145987189575433, "ann_vol": 0.11649054432577757, "sharpe": 1.7782123978935958, "max_drawdown": -0.13541023210732528},
+  "holdings_level_agreement_pca_reproduced": false,
+  "orders_authorized": false,
+  "status": "PASS_RETURN_STREAM_PARITY_ONLY"
+}
