@@ -15,6 +15,8 @@ on:
       - 'code/production/config/equity_c20_return_stream_parity.json'
       - 'code/production/src/trading_prod/equity/agreement_reversion.py'
       - 'code/production/tests/test_agreement_reversion.py'
+      - 'code/production/src/trading_prod/equity/corridor_accept.py'
+      - 'code/production/tests/test_corridor_accept.py'
       - 'code/production/src/trading_prod/equity/pca_statarb.py'
       - 'code/production/tests/test_pca_statarb_calendar.py'
 permissions:
