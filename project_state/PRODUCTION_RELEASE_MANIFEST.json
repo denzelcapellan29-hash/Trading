@@ -1,6 +1,6 @@
 {
-  "branch": "production/tv-python-ibkr-shadow-bridge",
-  "branch_head": "beae7cf90620522b4864490257333bfcce1df453",
+  "branch": "production/three-portfolio-integration",
+  "branch_head": "4e53327beb2ce73cbdcc343c7a65a2696bd9ef7e",
   "canonical_drive_destinations": {
     "immutable_milestone": {
       "bytes": 53552,
@@ -54,7 +54,7 @@
     ]
   },
   "deprioritized": "perpetual historical first-seen TV database and GitHub Drive OAuth",
-  "draft_pr": 4,
+  "draft_pr": 5,
   "file_manifest": {
     "code/IBKR_Production_Infrastructure_V1_2026-08-29.zip": {
       "sha256": "d0243ac20bb48ef4eff702d43700bec6464313588d8204ffa10fa8d6e030019c",
@@ -118,7 +118,7 @@
     "failures": 0,
     "scope": "offline fake TradingView + original IBKR V1 simulated portfolio/reconciliation"
   },
-  "next_executable_task": "Implement time-aware live ten-metal confirmed-weekly data plus separately verified as-of six ETF flow/AUM source adapter; reproduce frozen 27 price-PCA variants, two lagged flow horizons, causal H1/H2 target snapshots against exact reference fixture. Parallel FAST genuine Monday and equity holdings work. No orders until verified IBKR paper and frozen three-way risk/allocation.",
+  "next_executable_task": "Recover/reproduce exact Agreement holdings generator and port frozen Corridor ACCEPT Phase5/6 to current 78m TradingView inputs; preserve FAST Oct5 prospective checkpoint; then build one simultaneous 3-portfolio normalized target snapshot before IBKR paper execution qualification.",
   "orders_enabled": false,
   "previous_ibkr_machine_check": {
     "handshake": "verified in previous August/September equity session, not this run",
@@ -132,21 +132,27 @@
   "production_gates": {
     "account_risk_caps": "UNFROZEN",
     "actual_all_31_fast_signal_exit_allocator": "BLOCK_ASOF_EXIT_AND_EXECUTION_VOL_ALLOCATION",
-    "complete_equity_generators": "PARTIAL",
+    "complete_equity_generators": "PARTIAL_BARBELL_AND_PCA_CURRENT_PASS_AGREEMENT_AND_CORRIDOR_CURRENT_OPEN",
     "current_source_frozen_signal_31_pair_research_diagnostic": "PASS_ALL31_AS_RETRIEVED_TUESDAY_NOT_ASOF",
     "marks_to_simulated_ibkr_intents": "PASS",
     "qualified_fast_targets": "BLOCK_NOT_MONDAY_SOURCE_VERIFIED_OR_FULLY_ALLOCATED",
     "real_ibkr_paper_gateway_reconciliation": "NOT_YET_RUN",
     "tv_fxcm_31_live_mark": "PASS",
-    "metals_live_input_to_target_parity": "BLOCK",
+    "metals_live_input_to_target_parity": "PASS_CURRENT_SAVED_PINE_WITH_TWO_DOCUMENTED_IMMATERIAL_VENDOR_REVISIONS_RESEARCH_ONLY",
     "metals_executable_ibkr_instrument_map": "BLOCK",
     "three_way_outer_allocation": "UNFROZEN",
-    "three_portfolio_broker_paper_test": "NOT_YET_RUN"
+    "three_portfolio_broker_paper_test": "NOT_YET_RUN",
+    "equity_c20_return_stream_reproduction": "PASS_703_WEEKS_MAX_ABS_9.996E-17",
+    "equity_tradingview_full503_current_source": "PASS_503_OF_503_2026_09_25",
+    "equity_pca_8910_current_source": "PASS_38_STOCK_BOOK_2026_09_25_HISTORICAL_HOLDINGS_PARITY_OPEN",
+    "equity_agreement_current_generator": "BLOCK_EXACT_SOURCE_NOT_RECOVERED",
+    "equity_corridor_current_78m_generator": "BLOCK_PORT_PENDING",
+    "metals_vendor_revision_sensitivity": "PASS_MAX_ABS_TARGET_DIFF_LT_5E-7"
   },
   "retuning": false,
   "snapshot_file_manifest_note": "file_manifest indexes immutable 2026-09-29 bundle contents; living canonical index subsequently appended verified Drive IDs.",
   "stacked_on_draft_pr": 2,
-  "state": "THREE_PORTFOLIO_SCOPE_DEFINED_METALS_HISTORICAL_PARITY_PASS_SHARED_EXECUTION_AND_LIVE_FEED_GATES_OPEN",
+  "state": "THREE_PORTFOLIO_REPRO_ADVANCED_EQUITY_C20_EXACT_BARBELL_PCA_CURRENT_METALS_CURRENT_RESEARCH_TARGETS_EXECUTION_GATES_OPEN",
   "trading_repo": "denzelcapellan29-hash/Trading",
   "unmerged": true,
   "production_scope": "THREE_PORTFOLIOS_FAST_EQUITIES_METALS",
@@ -173,14 +179,67 @@
   "three_portfolio_integration": {
     "git_branch": "production/three-portfolio-integration",
     "draft_pr": 5,
-    "ci_run_id": 36657580334,
-    "ci_tests_passed": 55,
+    "ci_run_id": 36809993631,
+    "ci_tests_passed": 65,
     "ci_unqualified_paper_gate_rejected": true,
     "mirror_source_drive_id": "1x51RShvBisvdPp9UFzJnNmmksvhE__3q",
     "report_zip_drive_id": "1lunlcdjgZdX0IAcHI68cAZuPKAVlJ482",
     "report_markdown_drive_id": "1xK0CmLnF7nJzSlphms-dep1qCmpe-4ms",
     "metals_derived_parity_drive_id": "1-Y4OsN_mUC9bJNeqLXy-nsmB1LWNOTRs",
     "standalone_machine_manifest_drive_id": "1KGmkWsfe1uJ9UKk5znU_dwWB6hOz8ZVa",
-    "original_metals_handoff_drive_id": "1Fl72hLgFnx6x9m0EE1MsALn22aTnP4XM"
+    "original_metals_handoff_drive_id": "1Fl72hLgFnx6x9m0EE1MsALn22aTnP4XM",
+    "branch_head": "4e53327beb2ce73cbdcc343c7a65a2696bd9ef7e"
+  },
+  "equity_reproduction_milestone": {
+    "canonical_existing_data_closure_drive_id": "1gOyTaK2w18f6RyBhOTTqUsv1TgJyCr7j",
+    "c20_aligned_weeks": 703,
+    "c20_start": "2013-02-08",
+    "c20_end": "2026-07-24",
+    "c20_max_abs_error": 9.996344030316351e-17,
+    "current_signal_date": "2026-09-25",
+    "full503_coverage": 503,
+    "barbell_current": [
+      "CRL",
+      "WRB",
+      "DGX",
+      "CSGP"
+    ],
+    "pca_current_selection_count": 38,
+    "pca_current_gross_abs_weight": 0.9999999999999997,
+    "pca_current_net_weight": 4.85722573273506e-17,
+    "pca_run_id": 36809723974,
+    "agreement_exact_current_generator": false,
+    "corridor_current_78m_generator": false,
+    "orders_authorized": false
+  },
+  "metals_current_source_milestone": {
+    "live_run_id": 36809780396,
+    "tests_passed": 65,
+    "confirmed_weekly_rows": 519,
+    "confirmed_bar_end_utc": "2026-09-25T21:00:00+00:00",
+    "signal_week_label": "2026-09-21",
+    "historical_overlap_rows": 400,
+    "historical_overlap_mismatches": 2,
+    "documented_revisions": {
+      "2026-02-13": "EXPORT_ETF_GLD_FLOW_OVER_AUM",
+      "2026-05-08": "EXPORT_ETF_DBB_FLOW_OVER_AUM"
+    },
+    "sensitivity_run_id": 36809516753,
+    "aug31_composite_max_abs_diff": 4.911083759905066e-7,
+    "aug31_flow_max_abs_diff": 4.974984754158029e-7,
+    "current_composite_research_weights": {
+      "Gold": 0.016974121416165836,
+      "Silver": -0.00822075608409493,
+      "Platinum": 0.0636442262425918,
+      "Palladium": 0.2313535726593358,
+      "Copper": -0.0020211306405719595,
+      "Aluminium": 0,
+      "Nickel": 0.021228056260897167,
+      "Zinc": 0.01996584292142736,
+      "Lead": -0.33434716018805044,
+      "Tin": -0.008576772587700619
+    },
+    "execution_map_applied": false,
+    "orders_authorized": false
   }
 }
