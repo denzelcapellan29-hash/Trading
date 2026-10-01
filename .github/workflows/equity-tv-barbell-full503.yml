@@ -1,0 +1,31 @@
+name: Equity Full503 TradingView Barbell Diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/three-portfolio-integration]
+    paths:
+      - '.github/workflows/equity-tv-barbell-full503.yml'
+      - 'code/production/tools/equity_tv_barbell_full503.py'
+      - 'code/production/config/equity_universe_503_ibkr.csv'
+permissions:
+  contents: read
+jobs:
+  full503-read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install production and TradingView client
+        working-directory: code/production
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[equity]'
+          python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Pull bounded daily history for frozen 503 and derive Barbell selections
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python tools/equity_tv_barbell_full503.py
