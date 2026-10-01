@@ -1,0 +1,14 @@
+{
+  "freeze_id":"METALS-FROZEN-2026-09-17",
+  "reference_signal_week":"2026-08-31",
+  "composite_target_weights":{
+    "Gold":0.094252,"Silver":0.000802,"Platinum":0.076796,"Palladium":-0.193153,"Copper":0.0,
+    "Aluminium":0.005955,"Nickel":0.004387,"Zinc":-0.184893,"Lead":0.004372,"Tin":0.191482
+  },
+  "flow_component_target_weights":{
+    "Gold":0.0,"Silver":0.0,"Platinum":0.157514,"Palladium":-0.175145,"Copper":0.0,
+    "Aluminium":0.0,"Nickel":0.0,"Zinc":-0.157514,"Lead":0.0,"Tin":0.175145
+  },
+  "provenance":"derived frozen reference weights only; no raw licensed inputs",
+  "orders_authorized":false
+}

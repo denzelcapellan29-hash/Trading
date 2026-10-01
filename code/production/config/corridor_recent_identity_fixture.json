@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "source_freeze": "EQUITY_CORRIDOR_ACCEPT_PHASE6_2026-08-28",
+  "source_archive_sha256": "3399b76729672816ef6a13b3b4867fa32aecef59cfba8d55630a2217734079f9",
+  "window_start_utc": "2026-08-01T00:00:00+00:00",
+  "expected_count": 6,
+  "identity_fields": [
+    "ticker",
+    "snapshot_time",
+    "touch_time",
+    "resolution_time",
+    "entry_time",
+    "direction"
+  ],
+  "trades": [
+    {
+      "ticker": "DGX",
+      "snapshot_time": "2026-07-31T18:42:00+00:00",
+      "touch_time": "2026-08-03T13:30:00+00:00",
+      "resolution_time": "2026-08-04T13:30:00+00:00",
+      "entry_time": "2026-08-04T13:30:00+00:00",
+      "direction": -1
+    },
+    {
+      "ticker": "EXC",
+      "snapshot_time": "2026-08-11T18:42:00+00:00",
+      "touch_time": "2026-08-12T13:30:00+00:00",
+      "resolution_time": "2026-08-12T18:42:00+00:00",
+      "entry_time": "2026-08-12T18:42:00+00:00",
+      "direction": 1
+    },
+    {
+      "ticker": "SO",
+      "snapshot_time": "2026-08-11T18:42:00+00:00",
+      "touch_time": "2026-08-12T13:30:00+00:00",
+      "resolution_time": "2026-08-12T18:42:00+00:00",
+      "entry_time": "2026-08-12T18:42:00+00:00",
+      "direction": 1
+    },
+    {
+      "ticker": "CSX",
+      "snapshot_time": "2026-08-12T18:42:00+00:00",
+      "touch_time": "2026-08-13T18:42:00+00:00",
+      "resolution_time": "2026-08-14T13:30:00+00:00",
+      "entry_time": "2026-08-14T13:30:00+00:00",
+      "direction": 1
+    },
+    {
+      "ticker": "TMUS",
+      "snapshot_time": "2026-08-13T18:42:00+00:00",
+      "touch_time": "2026-08-14T13:30:00+00:00",
+      "resolution_time": "2026-08-14T16:06:00+00:00",
+      "entry_time": "2026-08-14T16:06:00+00:00",
+      "direction": -1
+    },
+    {
+      "ticker": "FTV",
+      "snapshot_time": "2026-08-14T18:42:00+00:00",
+      "touch_time": "2026-08-17T13:30:00+00:00",
+      "resolution_time": "2026-08-17T14:48:00+00:00",
+      "entry_time": "2026-08-17T14:48:00+00:00",
+      "direction": -1
+    }
+  ],
+  "raw_prices_included": false,
+  "window_end_utc": "2026-08-18T00:00:00+00:00",
+  "note": "Fixture restricted to the fully warmed overlap of the bounded 340-bar current pull. July BKR/TECH require older pre-snapshot bars than this live diagnostic requests; post-2026-08-17 trades are outside the frozen historical ledger."
+}

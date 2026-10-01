@@ -1,0 +1,27 @@
+name: Metals TradingView Study Probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/three-portfolio-integration]
+    paths:
+      - '.github/workflows/metals-tv-study-probe.yml'
+      - 'code/production/tools/tv_private_indicator_probe.py'
+permissions:
+  contents: read
+jobs:
+  read-only-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install TradingView client
+        run: python -m pip install --disable-pip-version-check tradingview-api-python
+      - name: Locate user-owned metals studies without revealing source or credentials
+        working-directory: code/production
+        env:
+          SESSIONID: ${{ secrets.SESSIONID }}
+          SESSIONID_SIGN: ${{ secrets.SESSIONID_SIGN }}
+        run: python tools/tv_private_indicator_probe.py

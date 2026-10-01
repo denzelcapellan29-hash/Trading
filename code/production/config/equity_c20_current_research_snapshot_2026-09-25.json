@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "freeze_scope": "EQUITY_C20_CURRENT_RESEARCH_SNAPSHOT",
+  "signal_date": "2026-09-25",
+  "sources": {
+    "daily_full503_run_id": 36878075653,
+    "corridor_full503_run_id": 36882678757,
+    "stock_coverage": 503,
+    "corridor_tested": 503,
+    "corridor_source_failures": 0
+  },
+  "frozen_composition": {
+    "barbell": 0.4,
+    "agreement": 0.2,
+    "pca_8910": 0.2,
+    "corridor_accept": 0.2
+  },
+  "status": {
+    "barbell": "PASS_CURRENT_SOURCE_DIAGNOSTIC",
+    "pca_8910": "PASS_CURRENT_SOURCE_DIAGNOSTIC",
+    "agreement": "PASS_DOCUMENTED_RULE_RECONSTRUCTION_SOURCE_PARITY_PENDING",
+    "agreement_source_parity_verified": false,
+    "corridor_accept": "PASS_RECENT_FROZEN_IDENTITY_PARITY_NO_OPEN_POSITIONS",
+    "orders_authorized": false,
+    "corridor_source_parity_verified": true
+  },
+  "current_component_state": {
+    "barbell_count": 4,
+    "agreement_count": 11,
+    "pca_count": 38,
+    "corridor_active_count": 0,
+    "inactive_corridor_cash_fraction": 0.2
+  },
+  "aggregate": {
+    "holding_count": 51,
+    "gross_abs_weight": 0.7863492063492064,
+    "net_weight": 0.5999999999999998,
+    "explicit_cash_fraction": 0.2,
+    "holdings": [
+      {
+        "ticker": "ADI",
+        "target_fraction": -0.0022222222222222222
+      },
+      {
+        "ticker": "ADP",
+        "target_fraction": -0.0022222222222222222
+      },
+      {
+        "ticker": "AIZ",
+        "target_fraction": 0.007326007326007327
+      },
+      {
+        "ticker": "ANET",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "BEN",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "BKNG",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "BLDR",
+        "target_fraction": 0.004945054945054945
+      },
+      {
+        "ticker": "C",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "CBRE",
+        "target_fraction": 0.007326007326007327
+      },
+      {
+        "ticker": "COHR",
+        "target_fraction": 0.004945054945054945
+      },
+      {
+        "ticker": "COST",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "CRL",
+        "target_fraction": 0.1
+      },
+      {
+        "ticker": "CSGP",
+        "target_fraction": 0.09317460317460319
+      },
+      {
+        "ticker": "CSX",
+        "target_fraction": 0.007326007326007327
+      },
+      {
+        "ticker": "CVNA",
+        "target_fraction": 0.002380952380952381
+      },
+      {
+        "ticker": "DAL",
+        "target_fraction": -0.0022222222222222222
+      },
+      {
+        "ticker": "DGX",
+        "target_fraction": 0.1
+      },
+      {
+        "ticker": "DTE",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "DVN",
+        "target_fraction": -0.0022222222222222222
+      },
+      {
+        "ticker": "ES",
+        "target_fraction": 0.025507825507825512
+      },
+      {
+        "ticker": "FLEX",
+        "target_fraction": 0.002380952380952381
+      },
+      {
+        "ticker": "GDDY",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "GEV",
+        "target_fraction": 0.007326007326007327
+      },
+      {
+        "ticker": "GM",
+        "target_fraction": 0.002380952380952381
+      },
+      {
+        "ticker": "GPN",
+        "target_fraction": -0.004603174603174604
+      },
+      {
+        "ticker": "HD",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "HIG",
+        "target_fraction": 0.007326007326007327
+      },
+      {
+        "ticker": "HUBB",
+        "target_fraction": -0.002380952380952381
+      },
+      {
+        "ticker": "HWM",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "INCY",
+        "target_fraction": 0.007326007326007327
+      },
+      {
+        "ticker": "INTC",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "KMI",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "LYB",
+        "target_fraction": 0.002380952380952381
+      },
+      {
+        "ticker": "LYV",
+        "target_fraction": 0.004945054945054945
+      },
+      {
+        "ticker": "MCHP",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "NRG",
+        "target_fraction": 0.007326007326007327
+      },
+      {
+        "ticker": "PCAR",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "PHM",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "RCL",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "RF",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "SNPS",
+        "target_fraction": -0.0022222222222222222
+      },
+      {
+        "ticker": "STT",
+        "target_fraction": 0.007326007326007327
+      },
+      {
+        "ticker": "TAP",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "TFC",
+        "target_fraction": -0.002380952380952381
+      },
+      {
+        "ticker": "UAL",
+        "target_fraction": -0.0044444444444444444
+      },
+      {
+        "ticker": "UPS",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "VMC",
+        "target_fraction": 0.018181818181818184
+      },
+      {
+        "ticker": "VTR",
+        "target_fraction": 0.002380952380952381
+      },
+      {
+        "ticker": "WEC",
+        "target_fraction": -0.006825396825396825
+      },
+      {
+        "ticker": "WRB",
+        "target_fraction": 0.1
+      },
+      {
+        "ticker": "XYL",
+        "target_fraction": 0.007326007326007327
+      }
+    ]
+  },
+  "caveat": "Agreement remains a documented-rule reconstruction using an isolated OLS peer-equilibrium assumption because the original holdings/source code is not preserved; historical source parity is pending. Corridor recent identity parity is verified for the fully warmed bounded overlap window. This snapshot is not an order authorization.",
+  "corridor_recent_identity_parity": {
+    "window_start_utc": "2026-08-01T00:00:00+00:00",
+    "window_end_utc": "2026-08-18T00:00:00+00:00",
+    "expected_count": 6,
+    "observed_count": 6,
+    "missing_count": 0,
+    "extra_count": 0,
+    "passed": true
+  }
+}
