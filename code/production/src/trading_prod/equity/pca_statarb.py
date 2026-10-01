@@ -29,9 +29,15 @@ def _rebalance_date(signal_date:pd.Timestamp)->pd.Timestamp:
     if n<0:raise ValueError("signal date predates frozen PCA calendar")
     return d if n%2==0 else d-pd.Timedelta(days=7)
 
-def _quarter_fit_date(d:pd.Timestamp)->pd.Timestamp:
+def _quarter_fit_date(d:pd.Timestamp, available_dates=None)->pd.Timestamp:
     qstart=pd.Timestamp(year=d.year,month=((d.month-1)//3)*3+1,day=1)
-    return pd.date_range(qstart,qstart+pd.offsets.QuarterEnd(0),freq="W-FRI")[0]
+    qend=qstart+pd.offsets.QuarterEnd(0)
+    if available_dates is None:
+        return pd.date_range(qstart,qend,freq="W-FRI")[0]
+    idx=pd.DatetimeIndex(available_dates)
+    fridays=idx[(idx>=qstart)&(idx<=qend)&(idx.weekday==4)]
+    if len(fridays)==0: raise KeyError("no actual Friday signal date in PCA quarter")
+    return fridays.min()
 
 def _scores(R:pd.DataFrame,fit_date:pd.Timestamp,score_date:pd.Timestamp,k:int)->pd.Series:
     if fit_date not in R.index or score_date not in R.index:raise KeyError("required PCA date not in daily calendar")
@@ -61,10 +67,11 @@ def _scores(R:pd.DataFrame,fit_date:pd.Timestamp,score_date:pd.Timestamp,k:int)-
     return pd.Series(score[stable],index=np.asarray(R.columns)[elig[stable]],dtype=float)
 
 def compute_pca_8910_selections(panel:pd.DataFrame,*,signal_date:str|pd.Timestamp)->list[PCASelection]:
-    d=pd.Timestamp(signal_date).normalize();reb=_rebalance_date(d);fit=_quarter_fit_date(reb)
+    d=pd.Timestamp(signal_date).normalize();reb=_rebalance_date(d)
     stocks=panel[panel.ticker!="SPX"].copy()
     C=stocks.pivot(index="ref_date",columns="ticker",values="close").sort_index()
     C.index=pd.to_datetime(C.index).normalize();R=np.log(C/C.shift(1))
+    fit=_quarter_fit_date(reb,R.index)
     k_weights={}
     for k in KS:
         s=_scores(R,fit,reb,k)
