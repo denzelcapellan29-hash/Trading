@@ -36,12 +36,12 @@ def fetch(client,symbol,depth=340,timeout=6.):
         except Exception:pass
 
 def main(argv=None):
-    ap=argparse.ArgumentParser();ap.add_argument("--universe",type=Path,default=Path(__file__).resolve().parents[1]/"config"/"equity_universe_503_ibkr.csv");ap.add_argument("--limit",type=int,default=40);ap.add_argument("--depth",type=int,default=340);a=ap.parse_args(argv)
+    ap=argparse.ArgumentParser();ap.add_argument("--universe",type=Path,default=Path(__file__).resolve().parents[1]/"config"/"equity_universe_503_ibkr.csv");ap.add_argument("--limit",type=int,default=40);ap.add_argument("--depth",type=int,default=340);ap.add_argument("--identity-fixture",type=Path);a=ap.parse_args(argv)
     sid=os.environ.get("SESSIONID") or os.environ.get("TV_SESSIONID");sig=os.environ.get("SESSIONID_SIGN") or os.environ.get("TV_SESSIONID_SIGN")
     if not sid or not sig:raise SystemExit("AUTH_REQUIRED")
     from tradingviewApiPython import Client
     u=pd.read_csv(a.universe);u=u[u.ticker!="SPX"].head(a.limit)
-    client=Client(token=sid,signature=sig);results=[];bad=[]
+    client=Client(token=sid,signature=sig);results=[];bad=[];all_trades=[]
     try:
         for t in u.ticker.astype(str):
             try:rows=fetch(client,f"BATS:{t}",a.depth)
@@ -55,11 +55,27 @@ def main(argv=None):
             if med>7:
                 bad.append({"ticker":t,"reason":"NON_RTH_LIKE_CADENCE","median_bars_per_session":med});continue
             tr=reconstruct_corridor_accept(frame,ticker=t)
+            all_trades.extend(tr)
             open_tr=[x for x in tr if x.status=="open"]
             latest=tr[-1] if tr else None
             results.append({"ticker":t,"bars":len(frame),"median_bars_per_session":med,"trade_count_reconstructed":len(tr),"open_trade_count":len(open_tr),
               "latest_trade":None if latest is None else {"entry_time":latest.entry_time.isoformat(),"direction":latest.direction,"status":latest.status,"target_dist_atr":latest.target_dist_atr}})
     finally:client.end()
-    out={"status":"DERIVED_CORRIDOR_ACCEPT_PILOT","tested_tickers":len(u),"successful_tickers":len(results),"failure_records":bad,"open_positions":[r for r in results if r["open_trade_count"]>0],"orders_authorized":False,"source_parity_verified":False}
-    print(json.dumps(out,sort_keys=True));return 0 if len(results)>=max(1,int(.8*len(u))) else 3
+    parity=None
+    if a.identity_fixture:
+        fx=json.loads(a.identity_fixture.read_text());start=pd.Timestamp(fx["window_start_utc"])
+        def ident(t):
+            return (t.ticker,t.snapshot_time.tz_convert("UTC").isoformat(),t.touch_time.tz_convert("UTC").isoformat(),
+                    t.resolution_time.tz_convert("UTC").isoformat(),t.entry_time.tz_convert("UTC").isoformat(),int(t.direction))
+        observed=sorted({ident(t) for t in all_trades if t.entry_time.tz_convert("UTC")>=start})
+        expected=sorted({(r["ticker"],r["snapshot_time"],r["touch_time"],r["resolution_time"],r["entry_time"],int(r["direction"])) for r in fx["trades"]})
+        missing=sorted(set(expected)-set(observed));extra=sorted(set(observed)-set(expected))
+        parity={"expected_count":len(expected),"observed_count":len(observed),"missing_count":len(missing),"extra_count":len(extra),
+                "missing":[list(x) for x in missing[:20]],"extra":[list(x) for x in extra[:20]],"passed":not missing and not extra}
+    out={"status":"DERIVED_CORRIDOR_ACCEPT_PILOT","tested_tickers":len(u),"successful_tickers":len(results),"failure_records":bad,
+         "open_positions":[r for r in results if r["open_trade_count"]>0],"recent_frozen_identity_parity":parity,
+         "orders_authorized":False,"source_parity_verified":bool(parity and parity["passed"])}
+    print(json.dumps(out,sort_keys=True))
+    coverage_ok=len(results)>=max(1,int(.8*len(u)))
+    return 0 if coverage_ok and (parity is None or parity["passed"]) else 3
 if __name__=="__main__":raise SystemExit(main())
