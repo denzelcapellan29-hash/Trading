@@ -1,0 +1,61 @@
+name: IBKR Paper Smoke Safety
+on:
+  workflow_dispatch:
+  push:
+    branches: [production/ibkr-paper-order-smoke]
+    paths:
+      - '.github/workflows/ibkr-paper-smoke-safety.yml'
+      - 'code/production/tools/ibkr_paper_order_smoke.py'
+      - 'code/production/tests/test_ibkr_paper_order_smoke.py'
+      - 'code/production/src/trading_prod/broker/ibkr_tws.py'
+      - 'code/production/config/ibkr_paper_smoke.example.json'
+      - 'code/production/tools/run_ibkr_paper_smoke.ps1'
+permissions:
+  contents: read
+jobs:
+  offline-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install package
+        working-directory: code/production
+        run: python -m pip install --disable-pip-version-check -e '.[equity]'
+      - name: Run full offline regression suite
+        working-directory: code/production
+        run: python -m unittest discover -s tests -v
+      - name: Prove example smoke config cannot be mistaken for live
+        working-directory: code/production
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("config/ibkr_paper_smoke.example.json")
+          x=json.loads(p.read_text())
+          assert x["execution_mode"]=="PAPER"
+          assert x["transmit_orders"] is True
+          assert x["account"]["expected_account_type"]=="PAPER"
+          assert x["broker"]["paper_port"] in (7497,4002)
+          assert x["broker"]["live_port"] not in (x["broker"]["paper_port"],)
+          assert x["account"]["account_id"]=="DU_REPLACE_WITH_PAPER_ACCOUNT_ID"
+          print("PAPER_SMOKE_CONFIG_FAIL_CLOSED")
+          PY
+      - name: Parse Windows operator wrapper without running it
+        shell: pwsh
+        working-directory: code/production
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path "tools/run_ibkr_paper_smoke.ps1"),
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | Format-List | Out-String | Write-Error
+            exit 1
+          }
+          Write-Host "PAPER_SMOKE_POWERSHELL_PARSE_OK"

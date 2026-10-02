@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "execution_mode": "PAPER",
+  "transmit_orders": true,
+  "account": {
+    "base_currency": "USD",
+    "account_id": "DU_REPLACE_WITH_PAPER_ACCOUNT_ID",
+    "expected_account_type": "PAPER"
+  },
+  "broker": {
+    "provider": "IBKR_TWS",
+    "host": "127.0.0.1",
+    "paper_port": 7497,
+    "live_port": 7496,
+    "client_id": 97,
+    "connect_timeout_seconds": 20,
+    "snapshot_timeout_seconds": 20
+  },
+  "portfolio": {
+    "equity_sleeve_weight": 0.0,
+    "fx_sleeve_weight": 0.0,
+    "fx_sleeve_leverage": 1.0,
+    "strategies": {}
+  },
+  "risk": {
+    "kill_switch_file": "./state/KILL_SWITCH",
+    "max_signal_age_seconds": null,
+    "max_total_gross_nav": null,
+    "max_net_single_currency_nav": null,
+    "max_single_order_notional_nav": null,
+    "min_order_notional_account_ccy": 0.0,
+    "position_unit_tolerance": 1e-8,
+    "hard_limits_status": "PAPER_SMOKE_ONLY"
+  },
+  "state": {
+    "sqlite_path": "./state/ibkr_paper_smoke.sqlite3"
+  },
+  "orders": {
+    "default_order_type": "MKT",
+    "default_tif": "DAY",
+    "outside_rth": false
+  }
+}
