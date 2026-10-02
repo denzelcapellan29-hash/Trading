@@ -37,7 +37,7 @@ Copy the template outside Git or edit a local untracked copy:
 ```powershell
 cd code\production
 copy config\ibkr_paper_smoke.example.json config\ibkr_paper_smoke.local.json
-# Replace REPLACE_WITH_PAPER_ACCOUNT_ID locally. Do not commit the account ID.
+# Replace DU_REPLACE_WITH_PAPER_ACCOUNT_ID locally with the actual DU-prefixed paper account ID. Do not commit the account ID.
 ```
 
 Install the official IBKR TWS API Python package from the current IBKR API distribution, then install this repo package:
