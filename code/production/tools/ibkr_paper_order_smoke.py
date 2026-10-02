@@ -58,7 +58,10 @@ def validate_paper_smoke_config(cfg) -> int:
         raise RuntimeError("paper smoke requires transmit_orders=true")
     if str(cfg.raw["account"].get("expected_account_type", "")).upper() != "PAPER":
         raise RuntimeError("paper smoke requires expected_account_type=PAPER")
-    if not str(cfg.account_id).upper().startswith("DU"):\n        raise RuntimeError("paper smoke requires a DU-prefixed IBKR paper/demo account ID")\n    port = int(cfg.raw["broker"]["paper_port"])\n    if port not in PAPER_PORTS:
+    if not str(cfg.account_id).upper().startswith("DU"):
+        raise RuntimeError("paper smoke requires a DU-prefixed IBKR paper/demo account ID")
+    port = int(cfg.raw["broker"]["paper_port"])
+    if port not in PAPER_PORTS:
         raise RuntimeError(
             f"paper smoke refuses nonstandard paper socket port {port}; allowed={sorted(PAPER_PORTS)}"
         )
