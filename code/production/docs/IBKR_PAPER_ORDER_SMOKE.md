@@ -52,7 +52,16 @@ Connection-only check:
 py tools\ibkr_connection_probe.py --host 127.0.0.1 --port 7497 --client-id 97
 ```
 
-Actual bounded paper-order smoke:
+One-command Windows wrapper (recommended):
+
+```powershell
+py -m pip install -e .
+powershell -ExecutionPolicy Bypass -File tools\run_ibkr_paper_smoke.ps1 -PaperAccountId DU1234567
+```
+
+Use `-ConnectionOnly` first if you want to verify the socket without transmitting the test order. The account ID is written only under ignored `state/` on your machine.
+
+Equivalent direct bounded paper-order smoke:
 
 ```powershell
 py tools\ibkr_paper_order_smoke.py ^
