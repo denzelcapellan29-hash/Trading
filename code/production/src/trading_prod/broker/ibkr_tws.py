@@ -148,7 +148,7 @@ class IBKRTWSAdapter(BrokerAdapter):
 
             def execDetails(self, reqId, contract, execution):
                 oid = int(execution.orderId)
-                cid = next((o.client_order_id for o in adapter._open_orders if o.broker_order_id == oid), None)
+                cid = adapter._submitted_client_order_ids.get(oid) or next((o.client_order_id for o in adapter._open_orders if o.broker_order_id == oid), None)
                 adapter._fills.append(Fill(
                     str(execution.execId), oid, cid, from_ib_contract(contract), datetime.now(timezone.utc),
                     str(execution.side), float(execution.shares), float(execution.price)
@@ -167,6 +167,7 @@ class IBKRTWSAdapter(BrokerAdapter):
         self._open_orders: list[OpenBrokerOrder] = []
         self._fills: list[Fill] = []
         self._order_status: dict[int, dict[str, Any]] = {}
+        self._submitted_client_order_ids: dict[int, str] = {}
         self._account_values: dict[str, tuple[str, str, str]] = {}
         self._errors: list[tuple[int, int, str, str]] = []
 
@@ -221,8 +222,36 @@ class IBKRTWSAdapter(BrokerAdapter):
     def submit(self, order: OrderIntent) -> int:
         if not self.app.isConnected(): raise RuntimeError("IBKR adapter is not connected")
         oid = self._allocate_order_id()
+        self._submitted_client_order_ids[oid] = order.client_order_id
         self.app.placeOrder(oid, to_ib_contract(order.instrument), to_ib_order(order, self.account_id, self.transmit_orders))
         return oid
+
+    def get_order_status(self, broker_order_id: int) -> dict[str, Any] | None:
+        status = self._order_status.get(int(broker_order_id))
+        return None if status is None else dict(status)
+
+    def wait_for_order_status(
+        self,
+        broker_order_id: int,
+        *,
+        accepted_statuses: set[str] | None = None,
+        terminal_statuses: set[str] | None = None,
+        timeout_seconds: float = 15.0,
+        poll_seconds: float = 0.05,
+    ) -> dict[str, Any] | None:
+        accepted = accepted_statuses or {
+            "ApiPending", "PendingSubmit", "PreSubmitted", "Submitted", "PendingCancel", "Filled"
+        }
+        terminal = terminal_statuses or {"Filled", "Cancelled", "ApiCancelled", "Inactive"}
+        deadline = time.time() + float(timeout_seconds)
+        while time.time() < deadline:
+            status = self.get_order_status(broker_order_id)
+            if status is not None:
+                name = str(status.get("status", ""))
+                if name in accepted or name in terminal:
+                    return status
+            time.sleep(float(poll_seconds))
+        return self.get_order_status(broker_order_id)
 
     def cancel(self, broker_order_id: int) -> None:
         try:
