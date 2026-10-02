@@ -313,6 +313,17 @@
       ".github/workflows/ibkr-paper-smoke-safety.yml"
     ],
     "orders_authorized": "BOUNDED_PAPER_SMOKE_ONLY",
-    "live_orders_authorized": false
+    "live_orders_authorized": false,
+    "drive": {
+      "report_id": "1-3DtHPPkV8dXrtRvSnBRU0-leyWDzm8-",
+      "code_mirrors": {
+        "ibkr_paper_order_smoke_py": "1cI0glGD-GCIo64sVQAvQv-1WctVrE22Y",
+        "run_ibkr_paper_smoke_ps1": "1ZbBkBx_PmUZ0KiNxPWfhlfHF80ucRbVT",
+        "ibkr_paper_smoke_example_json": "1J0Gv2KvasOZmZiKs23uA24wPqGRiyT_-",
+        "runbook_md": "1k979pJkGDY9GhHADOszbDHapEPC7A_Ns",
+        "ibkr_tws_py": "1YA_dNnS5KwlW5ZrHP8MyFv-HNPPyxlEM",
+        "safety_workflow_yml": "1XQoQYjcW87S0GYxI7LSOXESnLN6K_MQQ"
+      }
+    }
   }
 }
