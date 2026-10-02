@@ -118,7 +118,7 @@
     "failures": 0,
     "scope": "offline fake TradingView + original IBKR V1 simulated portfolio/reconciliation"
   },
-  "next_executable_task": "Run the genuine 2026-10-05 09:00 London FAST as-of checkpoint and exact entry-price/all-in-stop sizing; in parallel recover independent Agreement source parity if available. Then create one simultaneous native-target snapshot for FAST + Equity C20 + Metals before freezing three-way account allocation and running IBKR paper execution qualification.",
+  "next_executable_task": "Run the bounded local IBKR PAPER smoke on the operator machine and require PASS_PAPER_ORDER_PATH_RECONCILED; then preserve that audit and continue the genuine Monday 2026-10-05 09:00 London FAST as-of/entry-price checkpoint.",
   "orders_enabled": false,
   "previous_ibkr_machine_check": {
     "handshake": "verified in previous August/September equity session, not this run",
@@ -136,12 +136,12 @@
     "current_source_frozen_signal_31_pair_research_diagnostic": "PASS_ALL31_AS_RETRIEVED_TUESDAY_NOT_ASOF",
     "marks_to_simulated_ibkr_intents": "PASS",
     "qualified_fast_targets": "BLOCK_NOT_PROSPECTIVE_MONDAY_SOURCE_VERIFIED_OR_ENTRY_PRICED",
-    "real_ibkr_paper_gateway_reconciliation": "NOT_YET_RUN",
+    "real_ibkr_paper_gateway_reconciliation": "INFRA_READY_LOCAL_PAPER_ORDER_SMOKE_NOT_YET_EXECUTED",
     "tv_fxcm_31_live_mark": "PASS",
     "metals_live_input_to_target_parity": "PASS_CURRENT_SAVED_PINE_WITH_TWO_DOCUMENTED_IMMATERIAL_VENDOR_REVISIONS_RESEARCH_ONLY",
     "metals_executable_ibkr_instrument_map": "BLOCK",
     "three_way_outer_allocation": "UNFROZEN",
-    "three_portfolio_broker_paper_test": "NOT_YET_RUN",
+    "three_portfolio_broker_paper_test": "NOT_YET_RUN_STRATEGY_PORTFOLIO_TEST_SEPARATE_FROM_BOUNDED_BROKER_SMOKE",
     "equity_c20_return_stream_reproduction": "PASS_703_WEEKS_MAX_ABS_9.996E-17",
     "equity_tradingview_full503_current_source": "PASS_503_OF_503_2026_09_25",
     "equity_pca_8910_current_source": "PASS_38_STOCK_BOOK_2026_09_25_HISTORICAL_HOLDINGS_PARITY_OPEN",
@@ -153,7 +153,7 @@
   "retuning": false,
   "snapshot_file_manifest_note": "file_manifest indexes immutable 2026-09-29 bundle contents; living canonical index subsequently appended verified Drive IDs.",
   "stacked_on_draft_pr": 2,
-  "state": "THREE_PORTFOLIO_REPRO_ADVANCED_FAST_ALLOCATOR_EXACT_EQUITY_ALL_CURRENT_SLEEVES_METALS_CURRENT_EXECUTION_GATES_OPEN",
+  "state": "THREE_PORTFOLIO_REPRO_ADVANCED_IBKR_PAPER_SMOKE_INFRA_READY_ACTUAL_LOCAL_ORDER_PENDING",
   "trading_repo": "denzelcapellan29-hash/Trading",
   "unmerged": true,
   "production_scope": "THREE_PORTFOLIOS_FAST_EQUITIES_METALS",
@@ -275,5 +275,44 @@
     "mismatch_cohorts_gt_1e12": 0,
     "pass": true,
     "orders_authorized": false
+  },
+  "ibkr_paper_smoke": {
+    "git_branch": "production/ibkr-paper-order-smoke",
+    "draft_pr": 6,
+    "base_branch": "production/three-portfolio-integration",
+    "ci_run_id": 37038697905,
+    "ci_tests_passed": 84,
+    "ci_status": "PASS_OFFLINE_SAFETY_ONLY",
+    "actual_broker_order_status": "NOT_YET_EXECUTED_LOCAL_SOCKET_REQUIRED",
+    "prior_historical_handshake": {
+      "host": "127.0.0.1",
+      "port": 7497,
+      "mode": "TWS_PAPER",
+      "counted_as_current_smoke": false
+    },
+    "hard_bounds": {
+      "execution_mode": "PAPER",
+      "transmit_orders": true,
+      "expected_account_type": "PAPER",
+      "required_account_prefix": "DU",
+      "allowed_ports": [
+        7497,
+        4002
+      ],
+      "required_ack": "PAPER-ONLY-1SHARE-SPY",
+      "opening_order": "BUY 1 SPY MKT DAY",
+      "flatten_rule": "SELL exactly opening filled quantity if any; final SPY units must equal baseline",
+      "live_override": false
+    },
+    "source_files": [
+      "code/production/tools/ibkr_paper_order_smoke.py",
+      "code/production/tools/run_ibkr_paper_smoke.ps1",
+      "code/production/config/ibkr_paper_smoke.example.json",
+      "code/production/docs/IBKR_PAPER_ORDER_SMOKE.md",
+      "code/production/src/trading_prod/broker/ibkr_tws.py",
+      ".github/workflows/ibkr-paper-smoke-safety.yml"
+    ],
+    "orders_authorized": "BOUNDED_PAPER_SMOKE_ONLY",
+    "live_orders_authorized": false
   }
 }
