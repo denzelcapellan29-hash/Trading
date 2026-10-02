@@ -4,7 +4,7 @@
   "transmit_orders": true,
   "account": {
     "base_currency": "USD",
-    "account_id": "REPLACE_WITH_PAPER_ACCOUNT_ID",
+    "account_id": "DU_REPLACE_WITH_PAPER_ACCOUNT_ID",
     "expected_account_type": "PAPER"
   },
   "broker": {
