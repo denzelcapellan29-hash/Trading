@@ -4,16 +4,22 @@ import unittest
 from pathlib import Path
 
 from trading_prod.config import load_config
-from trading_prod.domain import ExecutionMode
-from tools.ibkr_paper_order_smoke import ACK, PAPER_PORTS, build_intent, masked_account, validate_paper_smoke_config
+from tools.ibkr_paper_order_smoke import (
+    ACK,
+    PAPER_PORTS,
+    build_intent,
+    masked_account,
+    validate_paper_smoke_config,
+)
 
 
 class IBKRPaperOrderSmokeTests(unittest.TestCase):
-    def config(self, *, mode="PAPER", transmit=True, port=4002, expected="PAPER"):
+    def config(self, *, mode="PAPER", transmit=True, port=4002, expected="PAPER", account_id="DU_TEST_PAPER"):
         raw=json.loads(Path("config/production_v1.example.json").read_text())
         raw["execution_mode"]=mode
         raw["transmit_orders"]=transmit
-        raw["account"]["account_id"]="DU_TEST_PAPER"\n        raw["account"]["expected_account_type"]=expected
+        raw["account"]["account_id"]=account_id
+        raw["account"]["expected_account_type"]=expected
         raw["broker"]["paper_port"]=port
         f=tempfile.NamedTemporaryFile("w",delete=False,suffix=".json")
         json.dump(raw,f);f.close()
@@ -28,8 +34,8 @@ class IBKRPaperOrderSmokeTests(unittest.TestCase):
             validate_paper_smoke_config(self.config(port=7496))
 
     def test_live_and_nontransmitting_configs_refused(self):
-        # The production config layer itself rejects this LIVE template before
-        # the paper-smoke validator gets a chance to see it. That is desired.
+        # Existing ProductionConfig rejects this LIVE template even before
+        # the paper-smoke validator sees it. That is desired.
         with self.assertRaises(ValueError):
             self.config(mode="LIVE")
         with self.assertRaises(RuntimeError):
@@ -37,7 +43,12 @@ class IBKRPaperOrderSmokeTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             validate_paper_smoke_config(self.config(expected="LIVE"))
 
-    def test_non_du_account_refused(self):\n        cfg=self.config()\n        object.__setattr__(cfg, "raw", {**cfg.raw, "account": {**cfg.raw["account"], "account_id": "U1234567"}})\n        with self.assertRaises(RuntimeError):\n            validate_paper_smoke_config(cfg)\n\n    def test_order_is_hard_bounded_spy_one_share_market(self):\n        o=build_intent("BUY",1.0,"b")
+    def test_non_du_account_refused(self):
+        with self.assertRaises(RuntimeError):
+            validate_paper_smoke_config(self.config(account_id="U1234567"))
+
+    def test_order_is_hard_bounded_spy_one_share_market(self):
+        o=build_intent("BUY",1.0,"b")
         self.assertEqual(o.instrument.symbol,"SPY")
         self.assertEqual(o.action,"BUY")
         self.assertEqual(o.quantity,1.0)
