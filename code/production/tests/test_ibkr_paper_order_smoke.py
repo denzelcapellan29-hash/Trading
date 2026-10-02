@@ -29,8 +29,10 @@ class IBKRPaperOrderSmokeTests(unittest.TestCase):
             validate_paper_smoke_config(self.config(port=7496))
 
     def test_live_and_nontransmitting_configs_refused(self):
-        with self.assertRaises(RuntimeError):
-            validate_paper_smoke_config(self.config(mode="LIVE"))
+        # The production config layer itself rejects this LIVE template before
+        # the paper-smoke validator gets a chance to see it. That is desired.
+        with self.assertRaises(ValueError):
+            self.config(mode="LIVE")
         with self.assertRaises(RuntimeError):
             validate_paper_smoke_config(self.config(transmit=False))
         with self.assertRaises(RuntimeError):
