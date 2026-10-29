@@ -3,12 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
+from math import isfinite
 from typing import Iterable, Mapping
 
 from .broker.base import BrokerAdapter, BrokerSnapshot
 from .config import ProductionConfig
 from .domain import InstrumentMark, RiskDecision, StrategyTarget
 from .portfolio import PortfolioEngine
+from .preflight import strategy_input_reasons
 from .reconcile import Reconciler
 from .risk import RiskEngine
 from .state import StateStore
@@ -49,6 +51,8 @@ class TradingOrchestrator:
     ) -> CycleResult:
         cid = cycle_id_for(strategy_targets)
         nav = broker_snapshot.account.net_liquidation
+        if isinstance(nav, bool) or not isfinite(nav) or nav <= 0:
+            raise ValueError("account NAV must be finite and positive")
 
         if self.config.mode.value != "SHADOW":
             if broker_snapshot.account.account_id != self.config.account_id:
@@ -63,6 +67,14 @@ class TradingOrchestrator:
                 )
 
         now = datetime.now(timezone.utc)
+        input_reasons = strategy_input_reasons(
+            self.config, strategy_targets, marks, broker_snapshot.account, now
+        )
+        if input_reasons:
+            decision = RiskDecision(approved=False, reasons=tuple(input_reasons))
+            self.store.start_cycle(cid, self.config.mode.value, broker_snapshot.account.account_id, nav)
+            self.store.save_risk_decision(cid, decision)
+            return CycleResult(cid, 0, 0, decision, ())
         expired = [
             t for t in strategy_targets
             if t.expiration_timestamp is not None and t.expiration_timestamp <= now
@@ -77,7 +89,7 @@ class TradingOrchestrator:
             targets, broker_snapshot.positions, broker_snapshot.open_orders, nav
         )
 
-        decision = self.risk.evaluate(targets, orders, marks, nav)
+        decision = self.risk.evaluate(targets, orders, marks, nav, now=now)
         self.store.save_targets(cid, targets)
         self.store.save_risk_decision(cid, decision)
         self.store.save_order_intents(cid, orders)

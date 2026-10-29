@@ -1,5 +1,13 @@
 # Trading Production Infrastructure V1 — Interactive Brokers
 
+## Current productionization rollout
+
+The selected rollout is to qualify FAST, Equity C20 and Metals separately, then
+combine them for paper trading. See [the qualification plan](docs/PORTFOLIO_QUALIFICATION_PLAN.md).
+The older two-portfolio allocation and example config below remain development
+references; they do not set the three-way account allocation. Strategy orders
+remain unqualified, and selecting this rollout does not authorize transmission.
+
 This package is the first broker-facing production layer for the frozen combined portfolio.
 
 ## Launch allocation

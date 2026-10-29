@@ -1,0 +1,40 @@
+name: FAST Offline Qualification
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/fast-qualification-offline.yml'
+      - '.gitattributes'
+      - 'code/fx_fast/**'
+      - 'code/production/**'
+permissions:
+  contents: read
+jobs:
+  offline-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install mathematical and test dependencies
+        working-directory: code/production
+        run: python -m pip install --disable-pip-version-check -e '.[equity]'
+      - name: Run offline regressions and frozen source integrity
+        working-directory: code/production
+        run: python -m unittest discover -s tests -v
+      - name: Verify combined PAPER remains unqualified
+        working-directory: code/production
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+          p = subprocess.run([sys.executable, 'tools/check_three_portfolio_readiness.py', '--mode', 'PAPER'], capture_output=True, text=True)
+          assert p.returncode == 3, p.stderr
+          report = json.loads(p.stdout)
+          assert report['operational_release_approved'] is False
+          assert 'AUTHORIZATION.paper_disabled' in report['paper_and_live_blockers']
+          print('COMBINED_PAPER_REMAINS_UNQUALIFIED')
+          PY

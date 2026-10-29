@@ -6,6 +6,7 @@ from typing import Iterable, Mapping
 
 from .config import ProductionConfig
 from .domain import AccountTarget, InstrumentMark, OrderIntent, RiskDecision, SecurityType
+from .preflight import age_reasons, maximum_age
 
 
 class RiskEngine:
@@ -30,6 +31,8 @@ class RiskEngine:
 
         targets = list(targets)
         orders = list(orders)
+        mark_max_age, mark_limit_failures = maximum_age(risk_cfg, "max_mark_age_seconds", False)
+        reasons.extend(mark_limit_failures)
 
         max_age = risk_cfg.get("max_signal_age_seconds")
         if max_age is not None:
@@ -42,6 +45,8 @@ class RiskEngine:
         ccy_exposure: dict[str, float] = {}
         for t in targets:
             mark = marks[t.instrument.key]
+            if mark_max_age is not None:
+                reasons.extend(age_reasons(mark.timestamp, now, f"MARK:{t.instrument.key}", mark_max_age))
             if mark.is_stale:
                 reasons.append(f"STALE_MARK:{t.instrument.key}")
             i = t.instrument

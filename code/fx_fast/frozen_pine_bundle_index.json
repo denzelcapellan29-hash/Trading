@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "freeze_id": "FX-FAST-2026-08-28",
+  "source_handoff_sha256": "b90d7e98fb84650e3b388204c2c6f986b8f5635c4c4ddf3d15088bda67f71d40",
+  "payload_sha256": "0886b9e363dd4d743b08d13aa4f2b5cd19a798b3633da026b95300564f5bf6cd",
+  "files": {
+    "AUDCAD": {
+      "offset": 41,
+      "bytes": 38463,
+      "sha256": "98b256719c0b1135b2071e4cd689a98ccf92509c9878086a3980b8946387d048"
+    },
+    "AUDCHF": {
+      "offset": 38584,
+      "bytes": 36493,
+      "sha256": "617262363268b0040dc632f52005239f892da4a9b73edac2d869a0ed3382e4d1"
+    },
+    "AUDNZD": {
+      "offset": 75157,
+      "bytes": 38043,
+      "sha256": "4732dd0f8727da049c53c56b00555d942b377186375c2df40d455c635db45f20"
+    },
+    "AUDUSD": {
+      "offset": 113280,
+      "bytes": 39041,
+      "sha256": "cd8f2e1a8816eb089096a3e5924b0b0be9163a0712353ac7a49305b680c2e81b"
+    },
+    "CADCHF": {
+      "offset": 152401,
+      "bytes": 37221,
+      "sha256": "de3cd03f5a9654c619e84ab9fe2f871a8fa667c792939ea3edb32b623c575421"
+    },
+    "CADJPY": {
+      "offset": 189702,
+      "bytes": 38827,
+      "sha256": "916bd2a419ec6e1c130867d16c1cdfb633ef2cb2846850e2b25569f1877414a2"
+    },
+    "CHFJPY": {
+      "offset": 228609,
+      "bytes": 38434,
+      "sha256": "9e027151ab397643c794f3d03e999b10d3c91a09fdbc505626d3dcc08f96c60d"
+    },
+    "EURAUD": {
+      "offset": 267123,
+      "bytes": 39561,
+      "sha256": "4b83cdfcefe044fb27cd0281d75748da165b2ff89e66fef02090be0380c7d560"
+    },
+    "EURCAD": {
+      "offset": 306764,
+      "bytes": 43250,
+      "sha256": "222b25904eae66ac3bbacb7fdbd989673fe8ab3e3173b0b9fb2c3053ca72fd0e"
+    },
+    "EURCHF": {
+      "offset": 350094,
+      "bytes": 37966,
+      "sha256": "d5ca2ea1a0440feafb62773fffed6357c7c2712f9aa16ae5467183bca12ef837"
+    },
+    "EURGBP": {
+      "offset": 388140,
+      "bytes": 39089,
+      "sha256": "c64784d0da4edc0a2a9f474029928fff96bcdd6a8144c1161abdb8fa2ea5beba"
+    },
+    "EURJPY": {
+      "offset": 427309,
+      "bytes": 42290,
+      "sha256": "8ec1e75148505796bb2888b64070879b76a6055fd2dade7ffdbd87cbb8901469"
+    },
+    "EURNOK": {
+      "offset": 469679,
+      "bytes": 37937,
+      "sha256": "1bdad4b8d79f9155f7177a12bb2c8915c602ec3c364b0477bb8eef224285c094"
+    },
+    "EURNZD": {
+      "offset": 507696,
+      "bytes": 37637,
+      "sha256": "c4c361906b5510c035d2ffc828ad51582efcbaaf0516d9a9dc444efe54c448cb"
+    },
+    "EURSEK": {
+      "offset": 545413,
+      "bytes": 36836,
+      "sha256": "f6473e47acf7576ef308ab52ce6b3f2a27d942c620741c3e29ac59d361ef4e67"
+    },
+    "EURUSD": {
+      "offset": 582329,
+      "bytes": 38328,
+      "sha256": "2892b869835e3d4e44f1db3f030c0253bd95f7e82cacb592def8358b725aa7ab"
+    },
+    "GBPAUD": {
+      "offset": 620737,
+      "bytes": 39933,
+      "sha256": "a63d8ed6ff63a7b2e6646bfe8c6b610f8c0c6e4c377f710d7a3d6a96ca8cd4a1"
+    },
+    "GBPCAD": {
+      "offset": 660750,
+      "bytes": 39790,
+      "sha256": "017363d218003fa0317e3b4eab2f887465151c33e7e9a17c107bab333222a26e"
+    },
+    "GBPCHF": {
+      "offset": 700620,
+      "bytes": 35687,
+      "sha256": "0317109d6b1e42d0a0313f78617e98b4b22b89269d25d547542554f89288fbf6"
+    },
+    "GBPJPY": {
+      "offset": 736387,
+      "bytes": 34945,
+      "sha256": "d8d0b51dc28001845223229aed886947136e04159fcb78467edf56d9f667b729"
+    },
+    "GBPNZD": {
+      "offset": 771412,
+      "bytes": 38404,
+      "sha256": "055a7bdc5079dc69e6495e5cf19afd219b285a73ee494bed131079f4612e3a1f"
+    },
+    "GBPUSD": {
+      "offset": 809896,
+      "bytes": 37166,
+      "sha256": "bdac2e0eda0306e4000be68c20f784c5bacbe068af0a9c09fc5ffc76e24e0bc7"
+    },
+    "NZDCAD": {
+      "offset": 847142,
+      "bytes": 39150,
+      "sha256": "da2fecc13042d94f3088640eaae3b4d7ae1714e4e93256427c562b6672e949fb"
+    },
+    "NZDCHF": {
+      "offset": 886372,
+      "bytes": 38369,
+      "sha256": "e3233138268a3b4a1b5365bccb3ae2268d078e216c2387189aef3359b69249ff"
+    },
+    "NZDJPY": {
+      "offset": 924821,
+      "bytes": 39154,
+      "sha256": "1c654a3ab0179720be8c3eaba9c7ecd01a9f81af76acd318e239759ac2ba120f"
+    },
+    "NZDUSD": {
+      "offset": 964055,
+      "bytes": 40569,
+      "sha256": "bfe5aab4cc40bea63b602213666d97596f837b170eb3667966a81eb9804f7633"
+    },
+    "USDCAD": {
+      "offset": 1004704,
+      "bytes": 37898,
+      "sha256": "743e1f564e794b96c9376fee1e7d248be80a61c2079dbd510b00e8083b32558f"
+    },
+    "USDCHF": {
+      "offset": 1042682,
+      "bytes": 37204,
+      "sha256": "d66a65f0e8d55970821b52fa41a842c544f821f19c00a02777a2214ff121d433"
+    },
+    "USDJPY": {
+      "offset": 1079966,
+      "bytes": 39048,
+      "sha256": "ecb88fb46d730fe581fe4053b7d5c216535b0b9ff42a4babcd3f5194ae9bf7a8"
+    },
+    "USDNOK": {
+      "offset": 1119094,
+      "bytes": 36049,
+      "sha256": "31bda252e8031c4a4c564315610025c34fd63fc592c784c3aa15680c928bc0ba"
+    },
+    "USDSEK": {
+      "offset": 1155223,
+      "bytes": 37916,
+      "sha256": "aafc9bc42803c982e403d447c7a180f5f3a77e34daf74b9c6d082b01fa0b4aaa"
+    }
+  }
+}

@@ -1,8 +1,25 @@
 {
   "schema_version": 1,
   "scope": "FROZEN_FAST_EQUITIES_METALS",
-  "as_of_utc": "2026-09-29",
+  "as_of_utc": "2026-10-28",
+  "recorded_research_evidence_checkpoint": "2026-10-02",
   "repo": "denzelcapellan29-hash/Trading",
+  "rollout_plan": {
+    "selected_by_user_local_date": "2026-10-28",
+    "sequence": "QUALIFY_EACH_PORTFOLIO_SEPARATELY_THEN_COMBINED_PAPER",
+    "individual_scopes": ["FAST", "EQUITIES", "METALS"],
+    "current_stage": "INDIVIDUAL_OFFLINE_AND_SHADOW_QUALIFICATION",
+    "active_individual_scope": "FAST",
+    "combined_paper_prerequisites": [
+      "all_three_portfolios_independently_qualified",
+      "three_way_outer_allocation_and_cash_policy_frozen",
+      "hard_account_limits_and_freshness_limits_frozen",
+      "broker_contracts_and_protective_exit_lifecycles_verified",
+      "simultaneous_complete_target_snapshot_and_account_reconciliation",
+      "explicit_combined_paper_order_authorization"
+    ],
+    "selection_authorizes_order_transmission": false
+  },
   "account_outer_allocations": null,
   "all_portfolio_paper_orders_authorized": false,
   "all_portfolio_live_orders_authorized": false,
@@ -18,6 +35,10 @@
       "freeze_id": "FX-FAST-2026-08-28",
       "strategy_ids": ["FAST_31PAIR_PRODUCTION"],
       "historical_reference_reproduced": true,
+      "historical_allocator_reference_audit": "config/fast_allocator_reference_parity_2026-10-01.json",
+      "individual_qualification_audit": "config/fast_offline_qualification_audit.json",
+      "qualification_progress": "Reproduced from original hash-locked handoff: all 31 source hashes; 4184 primary and 4153 secondary weekly model comparisons; 4153 conditional branch/direction matches including 3664 no-trade rows; 2744 allocator rows / 948 cohorts. Daily EG source/full-state and prospective/execution gates remain open.",
+      "historical_allocator_scope": "2744 archived rows / 948 cohorts exact; prospective source timing, execution volatility and entry sizing remain separate",
       "research_current_source_model_coverage": "194/194 surfaces; 31/31 pair EG63 and EG126; Tuesday research only",
       "paper_gates": {
         "prospective_asof_and_same_decision_signal_parity": false,
@@ -30,8 +51,10 @@
     "EQUITIES": {
       "freeze_id": "EQUITY_FROZEN_REFERENCE_VINTAGES_IN_CANONICAL_HANDOFF",
       "strategy_ids": ["MOMENTUM_BARBELL", "AGREEMENT_REVERSION", "PCA_STATARB_8910", "CORRIDOR_ACCEPT"],
-      "historical_reference_reproduced": false,
-      "research_current_source_model_coverage": "IBKR paper API handshake previously passed; delayed daily full 503 not yet validated; 78m Corridor separate",
+      "historical_reference_reproduced": true,
+      "historical_reference_scope": "Aggregate C20 return stream only; this does not close original selected-holdings/source parity",
+      "historical_reference_audit": "config/equity_c20_return_stream_parity.json",
+      "research_current_source_model_coverage": "Recorded September-25 diagnostic: 503/503 daily sources; Barbell/PCA current holdings; Agreement documented-rule reconstruction with original-source gap; Corridor 503/503 current sources and 6/6 recent frozen trade identities, broader lifecycle qualification open",
       "paper_gates": {
         "full_503_completed_daily_source_and_ticker_parity": false,
         "barbell_original_selected_holdings_parity": false,

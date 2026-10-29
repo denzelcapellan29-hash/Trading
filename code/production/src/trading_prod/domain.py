@@ -4,6 +4,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import sha256
+from math import isfinite
 from typing import Any, Mapping
 
 
@@ -57,9 +58,10 @@ class InstrumentMark:
     is_stale: bool = False
 
     def __post_init__(self) -> None:
-        if self.price_quote_per_base <= 0:
+        if not isfinite(self.price_quote_per_base) or self.price_quote_per_base <= 0:
             raise ValueError("price_quote_per_base must be positive")
-        if self.base_to_account <= 0 or self.quote_to_account <= 0:
+        if (not isfinite(self.base_to_account) or not isfinite(self.quote_to_account)
+                or self.base_to_account <= 0 or self.quote_to_account <= 0):
             raise ValueError("currency conversions must be positive")
 
 
@@ -84,6 +86,9 @@ class StrategyTarget:
     def __post_init__(self) -> None:
         if (self.native_notional_fraction is None) == (self.target_units is None):
             raise ValueError("exactly one of native_notional_fraction or target_units must be set")
+        value = self.target_units if self.target_units is not None else self.native_notional_fraction
+        if not isfinite(value):
+            raise ValueError("strategy target must be finite")
 
 
 @dataclass(frozen=True)
@@ -137,7 +142,7 @@ class OrderIntent:
     source: str = "RECONCILIATION"
 
     def __post_init__(self) -> None:
-        if self.quantity <= 0:
+        if not isfinite(self.quantity) or self.quantity <= 0:
             raise ValueError("order quantity must be positive")
         if self.action not in {"BUY", "SELL"}:
             raise ValueError("action must be BUY or SELL")
