@@ -41,6 +41,9 @@
   "risk": {
     "kill_switch_file": "./state/KILL_SWITCH",
     "max_signal_age_seconds": null,
+    "max_calculation_age_seconds": null,
+    "max_mark_age_seconds": null,
+    "max_broker_snapshot_age_seconds": null,
     "max_total_gross_nav": null,
     "max_net_single_currency_nav": null,
     "max_single_order_notional_nav": null,

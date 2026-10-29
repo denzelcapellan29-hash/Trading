@@ -157,6 +157,7 @@ def main(argv=None) -> int:
         "result": "INCOMPLETE",
     }
     broker_ids: set[int] = set()
+    baseline = None
 
     try:
         broker.connect()
@@ -196,8 +197,8 @@ def main(argv=None) -> int:
         if not final_open or str(final_open.get("status")) not in TERMINAL:
             broker.cancel(oid)
             final_open = wait_terminal(broker, oid, args.cancel_wait_seconds)
-        if final_open is None:
-            raise RuntimeError("opening order status unavailable after submit/cancel sequence")
+        if not final_open or str(final_open.get("status")) not in TERMINAL:
+            raise RuntimeError("opening order not confirmed terminal after submit/cancel sequence; PAPER reconciliation required")
         store.update_order_state(oid, str(final_open.get("status", "UNKNOWN")))
         audit["orders"][-1]["final"] = final_open
 
@@ -236,6 +237,11 @@ def main(argv=None) -> int:
             "open_orders": len(after.open_orders),
             "recent_smoke_fills_persisted": persisted,
         }
+        working_smoke = [o.broker_order_id for o in after.open_orders
+                         if o.broker_order_id in broker_ids and o.status not in TERMINAL]
+        audit["final"]["working_smoke_order_ids"] = working_smoke
+        if working_smoke:
+            raise RuntimeError(f"PAPER smoke still has working orders: {working_smoke}")
         if abs(final_units - baseline) > 1e-8:
             raise RuntimeError(
                 f"PAPER smoke left SPY position changed: baseline={baseline} final={final_units}"
@@ -248,6 +254,38 @@ def main(argv=None) -> int:
         audit["result"] = "FAIL"
         audit["error_type"] = type(exc).__name__
         audit["error"] = str(exc)
+        # A missing acknowledgement does not prove an order was rejected.
+        # Cancel only this drill's orders and retain uncertain outcomes for
+        # operator reconciliation. Never create a new offset on failure.
+        cleanup = {"orders": [], "manual_paper_reconciliation_required": True}
+        for failed_oid in sorted(broker_ids):
+            entry = {"broker_order_id": failed_oid}
+            try:
+                status = broker.get_order_status(failed_oid)
+                if not status or str(status.get("status")) not in TERMINAL:
+                    broker.cancel(failed_oid)
+                    entry["cancel_requested"] = True
+                    status = wait_terminal(broker, failed_oid, args.cancel_wait_seconds)
+                entry["last_status"] = status
+                entry["terminal_confirmed"] = bool(status and str(status.get("status")) in TERMINAL)
+                if status:
+                    store.update_order_state(failed_oid, str(status.get("status", "UNKNOWN")))
+            except Exception as cleanup_exc:
+                entry["error"] = str(cleanup_exc)
+            cleanup["orders"].append(entry)
+        if broker_ids:
+            try:
+                cleanup_snapshot = broker.snapshot()
+                persist_snapshot_fills(store, cleanup_snapshot, broker_ids)
+                cleanup["spy_units"] = spy_units(cleanup_snapshot)
+                cleanup["baseline_spy_units"] = baseline
+                cleanup["working_smoke_order_ids"] = [
+                    o.broker_order_id for o in cleanup_snapshot.open_orders
+                    if o.broker_order_id in broker_ids and o.status not in TERMINAL
+                ]
+            except Exception as cleanup_exc:
+                cleanup["snapshot_error"] = str(cleanup_exc)
+        audit["cleanup"] = cleanup
         audit["recent_ibkr_errors"] = [
             {"req_id": x[0], "code": x[1], "text": x[2]}
             for x in broker._errors[-10:]

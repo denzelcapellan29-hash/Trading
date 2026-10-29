@@ -8,6 +8,7 @@ tradeable signal instructions. No licensed raw bar payload is written to disk.
 """
 from __future__ import annotations
 import argparse, ast, hashlib, json, math, os, time, sys
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -15,6 +16,16 @@ import numpy as np
 from trading_prod.fast_frozen_signal_core import daily_state, calculate_pair, SignalBlocked
 
 ALLOWED=(ast.Expression,ast.BinOp,ast.UnaryOp,ast.Name,ast.Constant,ast.Add,ast.Sub,ast.Mult,ast.Div,ast.USub,ast.UAdd,ast.Call,ast.Load)
+# 14 closes produce the first 13-return volatility. The current observation
+# needs 260 *prior valid* volatility values: 14 + 260 = 274 weekly rows.
+MIN_COMPLETE_WEEKLY_ROWS=274
+
+def require_volatility_warmup(matrix):
+    if len(matrix)<MIN_COMPLETE_WEEKLY_ROWS:
+        raise SignalBlocked('INSUFFICIENT_FULL_260_PRIOR_VOLATILITY_HISTORY')
+    prices=np.asarray(matrix,float)[-MIN_COMPLETE_WEEKLY_ROWS:,0]
+    if not np.isfinite(prices).all() or (prices<=0).any():
+        raise SignalBlocked('INCOMPLETE_FULL_260_PRIOR_VOLATILITY_HISTORY')
 
 
 def expr(expr_string,values):
@@ -117,6 +128,7 @@ def derive_current_signals(config,charts,observed_epoch):
     for pair,setting in sorted(config['pairs'].items()):
         try:
             matrix,ends,eg=aligned_pair_inputs(pair,setting,charts,observed_epoch)
+            require_volatility_warmup(matrix)
             states=calculate_pair(pair,matrix,ends,eg,allow_long=setting['allow_longs'],allow_short=setting['allow_shorts'])
             if not states:raise SignalBlocked('NO_FROZEN_WEEKLY_MODEL')
             last=states[-1]
@@ -126,6 +138,8 @@ def derive_current_signals(config,charts,observed_epoch):
             # not a genuine no-signal observation; do not count it as flat.
             if not last.eg63_available:
                 raise SignalBlocked('LATEST_EG63_UNAVAILABLE')
+            if not last.eg126_available:
+                raise SignalBlocked('LATEST_EG126_UNAVAILABLE')
             if not math.isfinite(last.primary_z):
                 raise SignalBlocked('LATEST_PRIMARY_MODEL_INCOMPLETE')
             if not math.isfinite(last.vol13_ann) or last.vol_regime==0:
@@ -133,7 +147,11 @@ def derive_current_signals(config,charts,observed_epoch):
             if not last.eg63_stable and not math.isfinite(last.secondary_z):
                 raise SignalBlocked('LATEST_SECONDARY_MODEL_INCOMPLETE')
             results[pair]={
+                **{k:(v if not isinstance(v,float) or math.isfinite(v) else None)
+                   for k,v in asdict(last).items()},
                 'model_week_end_utc':datetime.fromtimestamp(last.signal_week_end_epoch,timezone.utc).isoformat(),
+                'weekly_model_rows':len(matrix),
+                'prior_volatility_observations':260,
                 'direction':last.direction,'branch':last.branch,
                 'multiplier':last.multiplier if math.isfinite(last.multiplier) else None,
                 'eg63_available':last.eg63_available,'eg63_stable':last.eg63_stable,
@@ -153,7 +171,7 @@ def main(argv=None):
     p=argparse.ArgumentParser()
     p.add_argument('--manifest',type=Path,default=Path(__file__).with_name('frozen_fast_pair_inputs.json'))
     p.add_argument('--out',type=Path,default=Path('artifacts/fast_31_current_diagnostic_summary.json'))
-    p.add_argument('--weekly-depth',type=int,default=260)
+    p.add_argument('--weekly-depth',type=int,default=300)
     p.add_argument('--daily-depth',type=int,default=270)
     a=p.parse_args(argv)
     c=json.loads(a.manifest.read_text())
@@ -164,12 +182,19 @@ def main(argv=None):
     if not sid or not sign:raise SignalBlocked('AUTHENTICATED_TRADINGVIEW_REQUIRED')
     from tradingviewApiPython import Client
     client=Client(token=sid,signature=sign)
-    charts={};missing=[]
+    charts={};missing=[];source_receipts=[]
+    capture_started=time.time()
     try:
         for tf,depth in [('D',a.daily_depth),('W',a.weekly_depth)]:
             for sym in symbols:
                 try:
+                    started=time.time()
                     v=fetch_chart(client,sym,tf,depth)
+                    finished=time.time()
+                    source_receipts.append({'symbol':sym,'timeframe':tf,'rows':len(v),
+                        'observed_start_utc':datetime.fromtimestamp(started,timezone.utc).isoformat(),
+                        'observed_end_utc':datetime.fromtimestamp(finished,timezone.utc).isoformat(),
+                        'bar_start_and_close_array_sha256':hashlib.sha256(np.asarray(v,dtype='<f8').tobytes()).hexdigest()})
                     if len(v)<8:missing.append((sym,tf,'SHORT'))
                     else:charts[(sym,tf)]=v
                 except Exception:
@@ -193,10 +218,13 @@ def main(argv=None):
                  'signals':results,
                  'status':'SHADOW_RETROSPECTIVE_DIAGNOSTIC_ONLY_NOT_MON_cutoff_CERTIFIED',
                  'orders_authorized':False,'verified_Monday_asof':False}
-    # Only derived state, never raw licensed bars, goes into the private run-local output.
+    summary['capture_started_utc']=datetime.fromtimestamp(capture_started,timezone.utc).isoformat()
+    summary['source_receipts']=source_receipts
+    summary['source_timestamps_prove_publication']=False
+    # Only derived state and per-decision receipts, never raw licensed bars.
     a.out.parent.mkdir(parents=True,exist_ok=True)
     a.out.write_text(json.dumps(summary,indent=2,allow_nan=False))
-    public_summary={k:v for k,v in summary.items() if k!='signals'}
+    public_summary={k:v for k,v in summary.items() if k not in ('signals','source_receipts')}
     if summary.get('diagnostic_pair_count') == 31:
         public_summary['shadow_signal_diagnostics']=[{'pair':p,'direction':v['direction'],
              'branch':v['branch'],'multiplier':v['multiplier'],'vol13_ann':v.get('vol13_ann'),

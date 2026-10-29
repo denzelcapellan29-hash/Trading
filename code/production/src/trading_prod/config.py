@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import json
+import math
 
 from .domain import ExecutionMode
 
@@ -54,6 +55,12 @@ class ProductionConfig:
                 raise ValueError("LIVE mode requires explicit account_id")
             if self.raw["risk"].get("hard_limits_status") != "FROZEN":
                 raise ValueError("LIVE mode requires frozen hard account risk limits")
+            for name in ("max_total_gross_nav", "max_net_single_currency_nav",
+                         "max_single_order_notional_nav"):
+                value = self.raw["risk"].get(name)
+                if (isinstance(value, bool) or not isinstance(value, (int, float))
+                        or not math.isfinite(value) or value <= 0):
+                    raise ValueError(f"LIVE mode requires a finite positive {name}")
 
         alloc = self.strategy_allocations
         enabled_sum = sum(v.account_weight for v in alloc.values() if v.enabled and v.account_weight > 0)

@@ -84,6 +84,28 @@ def _regime(hist,current):
     return (1 if pct<1./3 else 2 if pct<=2./3 else 3,float(pct))
 
 
+def classify_frozen_decision(*, primary_z, secondary_z, eg63_available, eg63_stable,
+    eg126_available, eg126_stable, eg63_age, eg126_age, confidence_high,
+    residual_acceleration_z, vol_regime, allow_long=True, allow_short=True):
+    """Frozen Pine branch and categorical precedence, without model/source inference."""
+    direction=branch=0
+    if eg63_available and isfinite(primary_z):
+        if eg63_stable and abs(primary_z)>1.5:
+            direction=-1 if primary_z>0 else 1;branch=1
+        elif not eg63_stable and abs(primary_z)>1.625 and isfinite(secondary_z) and abs(secondary_z)>=2.:
+            direction=-1 if secondary_z>0 else 1;branch=2
+    if (direction>0 and not allow_long) or (direction<0 and not allow_short):direction=branch=0
+    marginal=bool(branch==1 and 1.5<abs(primary_z)<=1.625)
+    mature=bool(branch==1 and eg63_age is not None and eg63_age>=13
+        and not (eg126_available and eg126_stable and eg126_age is not None and eg126_age>=26))
+    favorable=bool(direction and isfinite(residual_acceleration_z) and direction*residual_acceleration_z>=0)
+    base=1.25 if confidence_high and favorable else 1. if confidence_high or favorable else .75
+    middle=bool(branch==1 and not mature and base==.75 and vol_regime==2)
+    multiplier=float('nan') if not direction else 1. if branch==2 else .5 if marginal or mature or middle else base
+    return {'direction':direction,'branch':branch,'primary_marginal':marginal,'weak_mature':mature,
+            'targeted_middle':middle,'acceleration_favorable':favorable,'multiplier':multiplier}
+
+
 @dataclass(frozen=True)
 class FrozenSignal:
     pair: str
@@ -173,22 +195,11 @@ def calculate_pair(pair, weekly, weekly_end_epochs, daily_states_at_week,
                 ssig=_sd(sr);sres=float(sr[-1]);sfv=float(w[i,0]-sres)
                 if ssig>0:sz=sres/ssig
         except SignalBlocked:pass
-        direction=branch=0
-        if av63 and isfinite(pz):
-            if stable63 and abs(pz)>1.5:
-                direction=-1 if pz>0 else 1;branch=1
-            elif not stable63 and abs(pz)>1.625 and isfinite(sz) and abs(sz)>=2.:
-                direction=-1 if sz>0 else 1;branch=2
-        if (direction>0 and not allow_long) or (direction<0 and not allow_short):direction=branch=0
-        mult=float('nan')
-        if direction:
-            marginal=branch==1 and 1.5<abs(pz)<=1.625
-            mature=branch==1 and age63>=13 and not (av126 and stable126 and age126>=26)
-            favorable=isfinite(accel) and direction*accel>=0
-            high=confidence>=2
-            base=1.25 if high and favorable else 1. if high or favorable else .75
-            middle=branch==1 and not mature and base==.75 and reg==2
-            mult=1. if branch==2 else .5 if marginal or mature or middle else base
+        choice=classify_frozen_decision(primary_z=pz,secondary_z=sz,
+            eg63_available=av63,eg63_stable=stable63,eg126_available=av126,eg126_stable=stable126,
+            eg63_age=age63,eg126_age=age126,confidence_high=confidence>=2,
+            residual_acceleration_z=accel,vol_regime=reg,allow_long=allow_long,allow_short=allow_short)
+        direction,branch,mult=choice['direction'],choice['branch'],choice['multiplier']
         states.append(FrozenSignal(pair,float(weekly_end_epochs[i]),float(w[i,0]),pfv,pres,psig,pz,sfv,sres,ssig,sz,
                    bool(av63),bool(stable63),float(t63),bool(av126),bool(stable126),float(t126),
                    age63 if av63 else None,age126 if av126 else None,drift,split,ratio,accel,confidence,confidence>=2,

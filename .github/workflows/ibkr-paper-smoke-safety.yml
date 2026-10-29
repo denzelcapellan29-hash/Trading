@@ -6,8 +6,8 @@ on:
     paths:
       - '.github/workflows/ibkr-paper-smoke-safety.yml'
       - 'code/production/tools/ibkr_paper_order_smoke.py'
-      - 'code/production/tests/test_ibkr_paper_order_smoke.py'
-      - 'code/production/src/trading_prod/broker/ibkr_tws.py'
+      - 'code/production/tests/**'
+      - 'code/production/src/**'
       - 'code/production/config/ibkr_paper_smoke.example.json'
       - 'code/production/tools/run_ibkr_paper_smoke.ps1'
 permissions:

@@ -14,6 +14,11 @@ from .state import StateStore
 def _ibkr(cfg):
     b = cfg.raw["broker"]
     port = b["live_port"] if cfg.mode.value == "LIVE" else b["paper_port"]
+    if cfg.mode.value == "PAPER":
+        if (cfg.raw["account"].get("expected_account_type") != "PAPER"
+                or not cfg.account_id.upper().startswith("DU")
+                or int(port) not in (4002, 7497)):
+            raise ValueError("PAPER requires expected PAPER account, DU account ID, and paper socket 4002/7497")
     return IBKRTWSAdapter(
         host=b["host"], port=port, client_id=b["client_id"], account_id=cfg.account_id,
         transmit_orders=cfg.transmit_orders,

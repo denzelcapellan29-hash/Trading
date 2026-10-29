@@ -1,0 +1,2 @@
+# Preserve compressed strategy source exactly across Windows checkouts.
+code/fx_fast/*.xz binary
